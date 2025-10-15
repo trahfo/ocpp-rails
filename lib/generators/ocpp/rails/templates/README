@@ -1,0 +1,33 @@
+===============================================================================
+
+Ocpp::Rails has been installed!
+
+Next steps:
+
+1. Run the migrations:
+
+   rails db:migrate
+
+2. The engine is mounted at /ocpp_admin
+
+   Visit http://localhost:3000/ocpp_admin to access the dashboard
+
+3. WebSocket endpoint for charge points:
+
+   ws://localhost:3000/ocpp_admin/ocpp/:charge_point_id
+
+4. Configure OCPP settings in config/initializers/ocpp_rails.rb
+
+5. For ActionCable to work, ensure you have configured cable.yml:
+
+   development:
+     adapter: redis
+     url: redis://localhost:6379/1
+
+6. Start your Rails server with:
+
+   rails server
+
+For more information, visit: https://github.com/yourusername/ocpp-rails
+
+===============================================================================
