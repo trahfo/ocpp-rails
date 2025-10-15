@@ -12,7 +12,7 @@ module Ocpp
           idTag: id_tag
         }
 
-        message = Protocol::MessageHandler.build_call(message_id, "RemoteStartTransaction", payload)
+        message = Protocol.build_call(message_id, "RemoteStartTransaction", payload)
 
         Message.create!(
           charge_point: charge_point,

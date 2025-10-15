@@ -11,7 +11,7 @@ module Ocpp
           transactionId: transaction_id
         }
 
-        message = Protocol::MessageHandler.build_call(message_id, "RemoteStopTransaction", payload)
+        message = Protocol.build_call(message_id, "RemoteStopTransaction", payload)
 
         Message.create!(
           charge_point: charge_point,

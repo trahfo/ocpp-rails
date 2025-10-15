@@ -7,10 +7,12 @@ Welcome to the OCPP Rails documentation! This Rails engine provides complete OCP
 ### Getting Started
 - **[Installation & Setup](getting-started.md)** - Install the gem, run the generator, configure your application
 - **[Configuration](configuration.md)** - All configuration options and environment setup
+- **[ActionCable with SQLite](actioncable-sqlite.md)** - WebSocket configuration using SQLite (no Redis required)
 
 ### Implementation Guides  
+- **[Real-Time Monitoring](real-time-monitoring.md)** - Monitor charge points, sessions, and meter values in real-time
 - **[Remote Charging Guide](remote-charging.md)** - Complete implementation guide for remote start/stop with meter monitoring
-- **[API Reference](api-reference.md)** - Models, controllers, jobs, and helper methods
+- **[API Reference](api-reference.md)** - Models, jobs, and helper methods
 - **[Message Reference](message-reference.md)** - OCPP message examples and JSON payloads
 
 ### Development
@@ -26,6 +28,8 @@ Welcome to the OCPP Rails documentation! This Rails engine provides complete OCP
 | Topic | Documentation |
 |-------|---------------|
 | First time setup | [Getting Started](getting-started.md) |
+| Real-time monitoring | [Real-Time Monitoring](real-time-monitoring.md) |
+| ActionCable/WebSocket setup | [ActionCable with SQLite](actioncable-sqlite.md) |
 | Remote charging workflow | [Remote Charging Guide](remote-charging.md) |
 | Database schema | [API Reference](api-reference.md#database-schema) |
 | OCPP messages | [Message Reference](message-reference.md) |
@@ -36,18 +40,21 @@ Welcome to the OCPP Rails documentation! This Rails engine provides complete OCP
 
 ### 🆕 New Users
 1. Start with [Getting Started](getting-started.md)
-2. Follow the [Remote Charging Guide](remote-charging.md)
-3. Review [Configuration](configuration.md)
+2. Set up [ActionCable with SQLite](actioncable-sqlite.md)
+3. Implement [Real-Time Monitoring](real-time-monitoring.md)
+4. Review [Configuration](configuration.md)
 
 ### 👨‍💻 Developers
-1. Read the [API Reference](api-reference.md)
-2. Study the [Message Reference](message-reference.md)
-3. Check the [Testing Guide](testing.md)
+1. Read the [Real-Time Monitoring](real-time-monitoring.md) guide
+2. Study the [API Reference](api-reference.md)
+3. Review the [Message Reference](message-reference.md)
+4. Check the [Testing Guide](testing.md)
 
 ### 🔧 DevOps/Operations
 1. Review [Configuration](configuration.md)
-2. Check [Troubleshooting](troubleshooting.md)
-3. Monitor via [Message Reference](message-reference.md)
+2. Set up [ActionCable with SQLite](actioncable-sqlite.md)
+3. Check [Troubleshooting](troubleshooting.md)
+4. Monitor via [Real-Time Monitoring](real-time-monitoring.md)
 
 ## Features Overview
 

@@ -5,25 +5,30 @@
 [![OCPP](https://img.shields.io/badge/OCPP-1.6-blue)]()
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-A Ruby on Rails engine that provides complete OCPP 1.6 protocol implementation for Electric Vehicle (EV) charging station management systems. Enable remote charging control, real-time monitoring, and comprehensive session management through a clean, Rails-native API.
+A Ruby on Rails engine that provides complete OCPP 1.6 protocol implementation for Electric Vehicle (EV) charging station management systems. This is a **backend-only gem** - you build your own UI while OCPP Rails handles all WebSocket communication, data models, and OCPP protocol compliance.
 
 ## ✨ Features
 
-### Remote Charging Control
-- 🚀 **Remote Start/Stop** - Initiate and terminate charging sessions from your app or web interface
-- 📊 **Real-time Monitoring** - Track energy consumption, power levels, and charging status live
-- ⚡ **Smart Charging** - Apply charging profiles and power limits dynamically
+### OCPP Protocol Layer (What This Gem Provides)
+- 📡 **WebSocket Communication** - ActionCable channel handles bidirectional OCPP messages
+- 🔌 **Protocol Handlers** - BootNotification, Authorize, Heartbeat, StartTransaction, StopTransaction, MeterValues, StatusNotification
+- 🗄️ **Data Models** - ChargePoint, ChargingSession, MeterValue, Message (audit log)
+- 🚀 **Remote Control Jobs** - RemoteStartTransaction, RemoteStopTransaction
+- 📊 **Real-time Broadcasts** - ActionCable broadcasts for status, sessions, and meter values
+- 💾 **SQLite Compatible** - Works with async adapter, no Redis required for development
 
-### Session Management
-- 💳 **Authorization** - RFID and ID tag validation with local offline lists
-- 📈 **Meter Values** - Support for 22+ OCPP measurands including Energy, Power, Current, Voltage, SoC
-- 🔄 **Transaction Tracking** - Complete session lifecycle with energy and duration calculations
+### What You Build (Your Application)
+- 🎨 **User Interface** - Build your own dashboard, charts, and controls
+- 🔐 **Authentication** - Implement your own user authentication
+- 📱 **API Endpoints** - Create REST/GraphQL APIs as needed
+- 💼 **Business Logic** - Billing, reservations, user management, etc.
+- 🎯 **Custom Authorization** - Override handlers for RFID validation logic
 
-### Infrastructure
-- 📡 **WebSocket Communication** - ActionCable-based real-time bidirectional messaging
-- 🗄️ **Complete Audit Trail** - All OCPP messages logged for debugging and compliance
-- 🔌 **Multi-connector Support** - Handle multiple simultaneous charging sessions
-- 💪 **Production Ready** - Comprehensive test suite with 100% passing tests
+### OCPP Compliance
+- ✅ **Core Profile** - All essential messages implemented
+- ✅ **Remote Control** - RemoteStartTransaction, RemoteStopTransaction
+- ✅ **Message Audit** - Complete logging for debugging and compliance
+- ✅ **Multi-connector** - Handle multiple simultaneous charging sessions
 
 ## 📋 OCPP 1.6 Compliance
 
@@ -62,8 +67,9 @@ rails generate ocpp:rails:install
 
 This will:
 - ✅ Create database migrations for charge points, sessions, and meter values
-- ✅ Mount the engine at `/ocpp_admin`
+- ✅ Mount the engine at `/ocpp` (ActionCable WebSocket endpoint)
 - ✅ Generate an initializer at `config/initializers/ocpp_rails.rb`
+- ✅ Configure ActionCable for SQLite compatibility
 - ✅ Display setup instructions
 
 Run the migrations:
@@ -85,70 +91,97 @@ Ocpp::Rails.setup do |config|
 end
 ```
 
+**Charge points connect to:**
+```
+ws://your-server:3000/ocpp/cable
+```
+
 For detailed setup instructions, see the [Getting Started Guide](docs/getting-started.md).
 
 ## 💡 Usage Examples
 
-### Start a Remote Charging Session
+### Monitor Charge Point Status
 
 ```ruby
-# Find the charge point
-charge_point = Ocpp::Rails::ChargePoint.find_by(identifier: "CP_001")
+# Query charge points
+connected_cps = Ocpp::Rails::ChargePoint.connected
+available_cps = Ocpp::Rails::ChargePoint.available
+charging_cps = Ocpp::Rails::ChargePoint.charging
 
-# Send remote start command
-Ocpp::Rails::RemoteStartTransactionJob.perform_later(
-  charge_point.id,
-  1,                    # connector_id
-  "RFID_USER_001"      # id_tag
-)
+# Check specific charge point
+cp = Ocpp::Rails::ChargePoint.find_by(identifier: "CP001")
+cp.connected?       # => true/false
+cp.status           # => "Available", "Charging", etc.
+cp.last_heartbeat_at
 ```
 
 ### Monitor Active Sessions
 
 ```ruby
-# Get all active charging sessions
-active_sessions = Ocpp::Rails::ChargingSession.active.includes(:charge_point)
+# Get active sessions
+active_sessions = Ocpp::Rails::ChargingSession.active
 
-# Get current session for a charge point
-current_session = charge_point.current_session
-
-# Access real-time meter values
-meter_values = current_session.meter_values.recent.limit(10)
-energy_consumed = current_session.energy_consumed  # in Wh
-power_level = current_session.meter_values.power.last&.value
+# Get session details
+session = cp.current_session
+session.connector_id
+session.energy_consumed  # kWh
+session.duration_seconds
 ```
 
-### Stop a Remote Charging Session
+### Monitor Meter Values
 
 ```ruby
-# Find the active session
-session = charge_point.current_session
+# Get latest readings
+latest_energy = cp.meter_values.energy.recent.first
+latest_power = cp.meter_values.power.recent.first
 
-# Send remote stop command
+# Get readings for a session
+session.meter_values.order(:timestamp)
+```
+
+### Real-Time Updates via ActionCable
+
+Subscribe to real-time broadcasts in your UI:
+
+```ruby
+# app/channels/meter_values_channel.rb
+class MeterValuesChannel < ApplicationCable::Channel
+  def subscribed
+    charge_point = Ocpp::Rails::ChargePoint.find(params[:charge_point_id])
+    stream_from "charge_point_#{charge_point.id}_meter_values"
+  end
+end
+```
+
+```javascript
+// Subscribe in JavaScript
+subscribeToMeterValues(chargePointId, {
+  onPower: (data) => {
+    updatePowerGauge(data.value);
+  },
+  onEnergy: (data) => {
+    updateEnergyCounter(data.value);
+  }
+});
+```
+
+### Remote Control
+
+```ruby
+# Start a charging session
+charge_point = Ocpp::Rails::ChargePoint.find_by(identifier: "CP001")
+
+Ocpp::Rails::RemoteStartTransactionJob.perform_later(
+  charge_point.id,
+  1,              # connector_id
+  "RFID12345"     # id_tag
+)
+
+# Stop a charging session
+session = charge_point.current_session
 Ocpp::Rails::RemoteStopTransactionJob.perform_later(
   charge_point.id,
-  session.transaction_id
-)
-```
-
-### Query Session Data
-
-```ruby
-# Get completed sessions from today
-today_sessions = Ocpp::Rails::ChargingSession.completed
-  .where("stopped_at >= ?", Time.current.beginning_of_day)
-  .order(stopped_at: :desc)
-
-# Calculate total energy for today
-today_energy = today_sessions.sum(:energy_consumed)
-
-# Get session summary
-session.attributes.slice(
-  'energy_consumed',    # Total Wh
-  'duration_seconds',   # Total seconds
-  'stop_reason',        # Why it stopped
-  'started_at',         # Start timestamp
-  'stopped_at'          # End timestamp
+  session.id
 )
 ```
 
@@ -161,8 +194,10 @@ For complete implementation examples, see the [Remote Charging Guide](docs/remot
 - **[Configuration Options](docs/configuration.md)** - Complete configuration reference
 
 ### Implementation Guides
+- **[Real-Time Monitoring Guide](docs/real-time-monitoring.md)** - Monitor charge points, sessions, and meter values in real-time
 - **[Remote Charging Implementation](docs/remote-charging.md)** - Complete guide to remote charging workflow with message diagrams
-- **[API Reference](docs/api-reference.md)** - Models, controllers, jobs, and helper methods
+- **[ActionCable with SQLite](docs/actioncable-sqlite.md)** - WebSocket configuration using SQLite (no Redis required)
+- **[API Reference](docs/api-reference.md)** - Models, jobs, and helper methods
 - **[Message Reference](docs/message-reference.md)** - OCPP message examples and payloads
 
 ### Development
