@@ -18,7 +18,16 @@ module Ocpp
           # Update charge point or connector status
           if connector_id == 0
             # Status for entire charge point
+            old_status = @charge_point.status
             @charge_point.update(status: status)
+            
+            # Log state change if status actually changed
+            log_status_change(nil, old_status, status, {
+              error_code: error_code,
+              info: @payload['info'],
+              vendor_id: @payload['vendorId'],
+              vendor_error_code: @payload['vendorErrorCode']
+            })
           else
             # Status for specific connector - store in metadata
             update_connector_status(connector_id, status, error_code)
@@ -35,10 +44,37 @@ module Ocpp
 
         def update_connector_status(connector_id, status, error_code)
           metadata = @charge_point.metadata || {}
+          old_status = metadata["connector_#{connector_id}_status"]
+          
           metadata["connector_#{connector_id}_status"] = status
           metadata["connector_#{connector_id}_error_code"] = error_code if error_code
           metadata["connector_#{connector_id}_updated_at"] = Time.current.iso8601
           @charge_point.update(metadata: metadata)
+          
+          # Log state change if status actually changed
+          log_status_change(connector_id, old_status, status, {
+            error_code: error_code,
+            info: @payload['info'],
+            vendor_id: @payload['vendorId'],
+            vendor_error_code: @payload['vendorErrorCode']
+          })
+        end
+
+        def log_status_change(connector_id, old_status, new_status, additional_metadata = {})
+          return if old_status == new_status
+          
+          begin
+            Ocpp::Rails::StateChange.create!(
+              charge_point: @charge_point,
+              change_type: "status",
+              connector_id: connector_id,
+              old_value: old_status,
+              new_value: new_status,
+              metadata: additional_metadata.compact
+            )
+          rescue => error
+            ::Rails.logger.error("Failed to log state change: #{error.message}")
+          end
         end
 
         def broadcast_status_change
