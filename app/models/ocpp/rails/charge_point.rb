@@ -6,6 +6,7 @@ module Ocpp
       has_many :charging_sessions, dependent: :destroy, class_name: "Ocpp::Rails::ChargingSession"
       has_many :meter_values, dependent: :destroy, class_name: "Ocpp::Rails::MeterValue"
       has_many :messages, dependent: :destroy, class_name: "Ocpp::Rails::Message"
+      has_many :state_changes, dependent: :destroy, class_name: "Ocpp::Rails::StateChange"
 
       validates :identifier, presence: true, uniqueness: true
       validates :ocpp_protocol, inclusion: { in: Ocpp::Rails.supported_versions }
