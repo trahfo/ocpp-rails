@@ -20,13 +20,24 @@ module Ocpp
     end
 
     class Configuration
-      attr_accessor :ocpp_version, :supported_versions, :heartbeat_interval, :connection_timeout
+      attr_accessor :ocpp_version, :supported_versions, :heartbeat_interval, :connection_timeout,
+                    :state_change_hooks, :state_change_retention_days, :state_change_cleanup_enabled
 
       def initialize
         @ocpp_version = "1.6"
         @supported_versions = ["1.6", "2.0", "2.0.1", "2.1"]
         @heartbeat_interval = 300
         @connection_timeout = 30
+        @state_change_hooks = []
+        @state_change_retention_days = 30
+        @state_change_cleanup_enabled = true
+      end
+
+      def register_state_change_hook(hook)
+        unless hook.respond_to?(:call)
+          raise ArgumentError, "Hook must respond to :call method"
+        end
+        @state_change_hooks << hook
       end
     end
   end
