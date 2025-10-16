@@ -16,7 +16,23 @@ module Ocpp
       scope :charging, -> { where(status: "Charging") }
 
       def heartbeat!
+        old_connected = connected
         update(last_heartbeat_at: Time.current, connected: true)
+        
+        # Log connection state change only if reconnecting (false -> true)
+        if old_connected == false
+          begin
+            state_changes.create!(
+              change_type: "connection",
+              connector_id: nil,
+              old_value: "false",
+              new_value: "true",
+              metadata: { source: "heartbeat" }
+            )
+          rescue => error
+            ::Rails.logger.error("Failed to log state change: #{error.message}")
+          end
+        end
       end
 
       def disconnect!
