@@ -620,20 +620,6 @@ end
 
 ---
 
-## Troubleshooting Checklist
-
-- [ ] ActionCable is mounted: `mount ActionCable.server => '/cable'`
-- [ ] Adapter is configured: `:async` (dev) or `:redis` (prod)
-- [ ] Charge point exists in database
-- [ ] WebSocket URL is correct (ws:// or wss://)
-- [ ] Firewall allows WebSocket connections
-- [ ] Allowed origins include your domain
-- [ ] Channel subscriptions use correct format
-- [ ] Broadcasts use correct channel names
-- [ ] Redis is running (if using redis adapter)
-
----
-
 ## Additional Resources
 
 - [ActionCable Overview](https://guides.rubyonrails.org/action_cable_overview.html)
