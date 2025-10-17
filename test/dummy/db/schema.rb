@@ -10,7 +10,19 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_15_190754) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_17_000000) do
+  create_table "ocpp_authorizations", force: :cascade do |t|
+    t.integer "charge_point_id", null: false
+    t.string "id_tag", null: false
+    t.string "status", null: false
+    t.datetime "expiry_date"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["charge_point_id"], name: "index_ocpp_authorizations_on_charge_point_id"
+    t.index ["created_at"], name: "index_ocpp_authorizations_on_created_at"
+    t.index ["id_tag"], name: "index_ocpp_authorizations_on_id_tag"
+  end
+
   create_table "ocpp_charge_points", force: :cascade do |t|
     t.string "identifier", null: false
     t.string "vendor"
@@ -88,8 +100,25 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_15_190754) do
     t.index ["timestamp"], name: "index_ocpp_meter_values_on_timestamp"
   end
 
+  create_table "ocpp_state_changes", force: :cascade do |t|
+    t.integer "charge_point_id", null: false
+    t.string "change_type", null: false
+    t.integer "connector_id"
+    t.string "old_value"
+    t.string "new_value", null: false
+    t.json "metadata", default: {}
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["change_type", "created_at"], name: "index_ocpp_state_changes_on_change_type_and_created_at"
+    t.index ["charge_point_id", "created_at"], name: "index_ocpp_state_changes_on_charge_point_id_and_created_at"
+    t.index ["charge_point_id"], name: "index_ocpp_state_changes_on_charge_point_id"
+    t.index ["created_at"], name: "index_ocpp_state_changes_on_created_at"
+  end
+
+  add_foreign_key "ocpp_authorizations", "ocpp_charge_points", column: "charge_point_id", on_delete: :cascade
   add_foreign_key "ocpp_charging_sessions", "ocpp_charge_points", column: "charge_point_id"
   add_foreign_key "ocpp_messages", "ocpp_charge_points", column: "charge_point_id"
   add_foreign_key "ocpp_meter_values", "ocpp_charge_points", column: "charge_point_id"
   add_foreign_key "ocpp_meter_values", "ocpp_charging_sessions", column: "charging_session_id"
+  add_foreign_key "ocpp_state_changes", "ocpp_charge_points", column: "charge_point_id", on_delete: :cascade
 end

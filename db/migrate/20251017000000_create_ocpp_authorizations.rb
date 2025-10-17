@@ -9,7 +9,6 @@ class CreateOcppAuthorizations < ActiveRecord::Migration[8.0]
       t.timestamps
     end
 
-    add_index :ocpp_authorizations, :charge_point_id
     add_index :ocpp_authorizations, :id_tag
     add_index :ocpp_authorizations, :created_at
   end
