@@ -541,33 +541,7 @@ volumes:
   redis_data:
 ```
 
-## Troubleshooting Configuration Issues
-
-### Check Current Configuration
-
-```ruby
-# Rails console
-Ocpp::Rails.configuration.ocpp_version
-# => "1.6"
-
-Ocpp::Rails.configuration.heartbeat_interval
-# => 300
-```
-
-### Verify Redis Connection
-
-```ruby
-# Rails console
-ActionCable.server.pubsub.redis_connection_for_subscriptions.ping
-# => "PONG"
-```
-
-### Check Database Configuration
-
-```ruby
-# Rails console
-ActiveRecord::Base.connection.execute("SELECT version()")
-```
+See the [Troubleshooting Guide](troubleshooting.md) for configuration issues.
 
 ## Best Practices
 
