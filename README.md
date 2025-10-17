@@ -85,7 +85,7 @@ Configure OCPP settings in `config/initializers/ocpp_rails.rb`:
 ```ruby
 Ocpp::Rails.setup do |config|
   config.ocpp_version = "1.6"
-  config.supported_versions = ["1.6", "2.0", "2.0.1", "2.1"]
+  config.supported_versions = ["1.6"]
   config.heartbeat_interval = 300  # 5 minutes
   config.connection_timeout = 30   # 30 seconds
 end
@@ -288,7 +288,6 @@ See the [Testing Guide](docs/testing.md) for detailed information.
 - ✅ Complete message logging
 
 ### Planned Features
-- 📝 Status notification handling
 - 📝 Configuration management (Get/ChangeConfiguration)
 - 📝 Firmware updates
 - 📝 Diagnostics upload
@@ -307,7 +306,7 @@ Contributions are welcome! Please feel free to submit a Pull Request. For major 
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/ocpp-rails.git
+git clone https://github.com/trahfo/ocpp-rails.git
 cd ocpp-rails
 
 # Install dependencies
@@ -347,8 +346,8 @@ This gem is available as open source under the terms of the [MIT License](LICENS
 ## 📞 Support
 
 - **Documentation**: [docs/](docs/)
-- **Issues**: [GitHub Issues](https://github.com/yourusername/ocpp-rails/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/ocpp-rails/discussions)
+- **Issues**: [GitHub Issues](https://github.com/trahfo/ocpp-rails/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/trahfo/ocpp-rails/discussions)
 
 ## 🔗 Links
 
@@ -359,7 +358,7 @@ This gem is available as open source under the terms of the [MIT License](LICENS
 
 ---
 
-**Status**: 🚀 Production Ready for Remote Charging  
+**Status**: 🔧 Alpha - Under Active Development  
 **Version**: 0.1.0  
 **OCPP**: 1.6 Edition 2  
 **Rails**: 7.0+  
