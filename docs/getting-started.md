@@ -445,8 +445,8 @@ If you encounter issues:
 
 1. Check the [Troubleshooting Guide](troubleshooting.md)
 2. Review the [API Reference](api-reference.md)
-3. Search [GitHub Issues](https://github.com/yourusername/ocpp-rails/issues)
-4. Ask in [GitHub Discussions](https://github.com/yourusername/ocpp-rails/discussions)
+3. Search [GitHub Issues](https://github.com/trahfo/ocpp-rails/issues)
+4. Ask in [GitHub Discussions](https://github.com/trahfo/ocpp-rails/discussions)
 
 ## What's Next?
 
@@ -460,6 +460,6 @@ Now you're ready to:
 
 ---
 
-**Need help?** See [Troubleshooting](troubleshooting.md) or [open an issue](https://github.com/yourusername/ocpp-rails/issues).
+**Need help?** See [Troubleshooting](troubleshooting.md) or [open an issue](https://github.com/trahfo/ocpp-rails/issues).
 
 **Ready to code?** Continue to [Remote Charging Guide](remote-charging.md) →

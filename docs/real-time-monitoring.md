@@ -1183,55 +1183,7 @@ end
 
 ## Troubleshooting
 
-### WebSocket Connection Issues
-
-If charge points can't connect:
-
-```ruby
-# Check ActionCable configuration
-Rails.application.config.action_cable.adapter
-# => :async or :redis
-
-# Check if ActionCable is mounted
-Rails.application.routes.url_helpers.cable_path
-# => "/ocpp/cable"
-
-# Test connection in Rails console
-ActionCable.server.pubsub.class
-```
-
-### No Broadcasts Received
-
-If your UI doesn't receive broadcasts:
-
-1. **Check JavaScript console** for connection errors
-2. **Verify channel subscription** in browser dev tools
-3. **Check Rails logs** for broadcast messages
-4. **Test broadcast manually**:
-
-```ruby
-# In Rails console
-ActionCable.server.broadcast(
-  "charge_point_1_meter_values",
-  { test: true }
-)
-```
-
-### Missing Meter Values
-
-If meter values aren't being stored:
-
-```ruby
-# Check if MeterValuesHandler is being called
-Rails.logger.level = :debug
-
-# Check for validation errors
-mv = Ocpp::Rails::MeterValue.new(...)
-mv.valid?
-mv.errors.full_messages
-```
-
----
+See the [Troubleshooting Guide](troubleshooting.md) for real-time monitoring issues.
 
 ## Next Steps
 

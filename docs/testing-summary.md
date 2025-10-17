@@ -179,6 +179,6 @@ All tables use `ocpp_` prefix and follow Rails conventions:
 
 ---
 
-**Last Updated**: 2024-01-15  
+**Last Updated**: 2025-10-17  
 **Status**: ✅ Remote Charging Fully Functional  
 **Test Success Rate**: 💯 100% (208/208 passing)

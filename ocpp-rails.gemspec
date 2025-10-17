@@ -6,7 +6,7 @@ Gem::Specification.new do |spec|
   spec.authors     = [ "Jakob Sommerhuber" ]
   spec.email       = [ "jakob@sommerhuber.name" ]
   spec.homepage    = "https://github.com/trahfo/ocpp-rails"
-  spec.summary     = "Rails engine that provides OCPP 1.6 - 2.2 communication for EV charging stations"
+  spec.summary     = "Rails engine that provides OCPP 1.6 communication for EV charging stations"
   spec.description = "Use this engine to communicate to your EV Charging stations"
   spec.license     = "MIT"
 

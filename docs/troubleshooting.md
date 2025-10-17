@@ -517,8 +517,8 @@ If you can't resolve your issue:
 
 1. **Check the logs**: `log/development.log` or `log/production.log`
 2. **Enable debug logging**: See "Enable Verbose Logging" above
-3. **Search existing issues**: [GitHub Issues](https://github.com/yourusername/ocpp-rails/issues)
-4. **Ask for help**: [GitHub Discussions](https://github.com/yourusername/ocpp-rails/discussions)
+3. **Search existing issues**: [GitHub Issues](https://github.com/trahfo/ocpp-rails/issues)
+4. **Ask for help**: [GitHub Discussions](https://github.com/trahfo/ocpp-rails/discussions)
 5. **Review documentation**: 
    - [Getting Started Guide](getting-started.md)
    - [Configuration Guide](configuration.md)
