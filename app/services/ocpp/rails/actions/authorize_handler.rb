@@ -13,15 +13,32 @@ module Ocpp
 
           ::Rails.logger.info("[OCPP] Authorize request from #{@charge_point.identifier} for idTag: #{id_tag}")
 
-          # Default implementation: Accept all tags
-          # Host application should override this handler to implement custom authorization logic
-          # such as checking against a database of valid RFID tags, checking user accounts, etc.
+          # Execute authorization hooks to determine access decision
+          result = Ocpp::Rails::AuthorizationHookManager.execute_hooks(@charge_point.id, id_tag)
+
+          # Persist authorization record for audit trail
+          begin
+            Ocpp::Rails::Authorization.create!(
+              charge_point_id: @charge_point.id,
+              id_tag: id_tag,
+              status: result[:status],
+              expiry_date: result[:expiry_date]
+            )
+          rescue => error
+            ::Rails.logger.error("[OCPP] Failed to persist Authorization record: #{error.message}")
+            # Continue - authorization decision already made, persistence failure shouldn't block response
+          end
+
+          # Build OCPP response
+          id_tag_info = { 'status' => result[:status] }
+          
+          # Only include expiryDate if status is Accepted and expiry_date is present
+          if result[:status] == 'Accepted' && result[:expiry_date].present?
+            id_tag_info['expiryDate'] = result[:expiry_date].iso8601
+          end
 
           {
-            'idTagInfo' => {
-              'status' => 'Accepted',
-              'expiryDate' => (Time.current + 1.year).iso8601
-            }
+            'idTagInfo' => id_tag_info
           }
         end
       end
