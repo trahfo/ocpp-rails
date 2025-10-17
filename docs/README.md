@@ -69,7 +69,6 @@ Welcome to the OCPP Rails documentation! This Rails engine provides complete OCP
 - WebSocket communication (ActionCable)
 
 ### 🚧 In Development
-- Status notification handling
 - Configuration management
 - Firmware updates
 - Diagnostics upload
@@ -83,9 +82,8 @@ Welcome to the OCPP Rails documentation! This Rails engine provides complete OCP
 
 ## Support
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/ocpp-rails/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/ocpp-rails/discussions)
-- **Email**: support@example.com
+- **Issues**: [GitHub Issues](https://github.com/trahfo/ocpp-rails/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/trahfo/ocpp-rails/discussions)
 
 ## Contributing
 
@@ -98,6 +96,6 @@ Contributions are welcome! See our [Contributing Guide](../CONTRIBUTING.md) for 
 
 ---
 
-**Last Updated**: 2024-01-15  
+**Last Updated**: 2025-10-17  
 **Version**: 0.1.0  
 **OCPP**: 1.6 Edition 2
