@@ -18,9 +18,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_07_000004) do
     t.datetime "expiry_date"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["charge_point_id"], name: "index_ocpp_authorizations_on_charge_point_id"
-    t.index ["created_at"], name: "index_ocpp_authorizations_on_created_at"
-    t.index ["id_tag"], name: "index_ocpp_authorizations_on_id_tag"
+    t.index [ "charge_point_id" ], name: "index_ocpp_authorizations_on_charge_point_id"
+    t.index [ "created_at" ], name: "index_ocpp_authorizations_on_created_at"
+    t.index [ "id_tag" ], name: "index_ocpp_authorizations_on_id_tag"
   end
 
   create_table "ocpp_charge_points", force: :cascade do |t|
@@ -41,7 +41,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_07_000004) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "auth_password_digest"
-    t.index ["identifier"], name: "index_ocpp_charge_points_on_identifier", unique: true
+    t.index [ "identifier" ], name: "index_ocpp_charge_points_on_identifier", unique: true
   end
 
   create_table "ocpp_charging_sessions", force: :cascade do |t|
@@ -60,10 +60,10 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_07_000004) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "transaction_id"
-    t.index ["charge_point_id", "connector_id"], name: "idx_on_charge_point_id_connector_id_097b46847b"
-    t.index ["charge_point_id", "connector_id"], name: "index_ocpp_one_active_session_per_connector", unique: true, where: "stopped_at IS NULL"
-    t.index ["charge_point_id"], name: "index_ocpp_charging_sessions_on_charge_point_id"
-    t.index ["transaction_id"], name: "index_ocpp_charging_sessions_on_transaction_id", unique: true
+    t.index [ "charge_point_id", "connector_id" ], name: "idx_on_charge_point_id_connector_id_097b46847b"
+    t.index [ "charge_point_id", "connector_id" ], name: "index_ocpp_one_active_session_per_connector", unique: true, where: "stopped_at IS NULL"
+    t.index [ "charge_point_id" ], name: "index_ocpp_charging_sessions_on_charge_point_id"
+    t.index [ "transaction_id" ], name: "index_ocpp_charging_sessions_on_transaction_id", unique: true
   end
 
   create_table "ocpp_messages", force: :cascade do |t|
@@ -77,9 +77,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_07_000004) do
     t.text "error_message"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["charge_point_id", "created_at"], name: "index_ocpp_messages_on_charge_point_id_and_created_at"
-    t.index ["charge_point_id"], name: "index_ocpp_messages_on_charge_point_id"
-    t.index ["message_id"], name: "index_ocpp_messages_on_message_id"
+    t.index [ "charge_point_id", "created_at" ], name: "index_ocpp_messages_on_charge_point_id_and_created_at"
+    t.index [ "charge_point_id" ], name: "index_ocpp_messages_on_charge_point_id"
+    t.index [ "message_id" ], name: "index_ocpp_messages_on_message_id"
   end
 
   create_table "ocpp_meter_values", force: :cascade do |t|
@@ -100,10 +100,10 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_07_000004) do
     t.string "timestamp_source", default: "station", null: false
     t.boolean "flagged", default: false, null: false
     t.string "flag_reason"
-    t.index ["charge_point_id"], name: "index_ocpp_meter_values_on_charge_point_id"
-    t.index ["charging_session_id"], name: "index_ocpp_meter_values_on_charging_session_id"
-    t.index ["measurand"], name: "index_ocpp_meter_values_on_measurand"
-    t.index ["timestamp"], name: "index_ocpp_meter_values_on_timestamp"
+    t.index [ "charge_point_id" ], name: "index_ocpp_meter_values_on_charge_point_id"
+    t.index [ "charging_session_id" ], name: "index_ocpp_meter_values_on_charging_session_id"
+    t.index [ "measurand" ], name: "index_ocpp_meter_values_on_measurand"
+    t.index [ "timestamp" ], name: "index_ocpp_meter_values_on_timestamp"
   end
 
   create_table "ocpp_state_changes", force: :cascade do |t|
@@ -115,10 +115,10 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_07_000004) do
     t.json "metadata", default: {}
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["change_type", "created_at"], name: "index_ocpp_state_changes_on_change_type_and_created_at"
-    t.index ["charge_point_id", "created_at"], name: "index_ocpp_state_changes_on_charge_point_id_and_created_at"
-    t.index ["charge_point_id"], name: "index_ocpp_state_changes_on_charge_point_id"
-    t.index ["created_at"], name: "index_ocpp_state_changes_on_created_at"
+    t.index [ "change_type", "created_at" ], name: "index_ocpp_state_changes_on_change_type_and_created_at"
+    t.index [ "charge_point_id", "created_at" ], name: "index_ocpp_state_changes_on_charge_point_id_and_created_at"
+    t.index [ "charge_point_id" ], name: "index_ocpp_state_changes_on_charge_point_id"
+    t.index [ "created_at" ], name: "index_ocpp_state_changes_on_created_at"
   end
 
   add_foreign_key "ocpp_authorizations", "ocpp_charge_points", column: "charge_point_id", on_delete: :cascade

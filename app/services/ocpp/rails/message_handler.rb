@@ -12,16 +12,16 @@ module Ocpp
         parsed = Protocol.parse(raw_message)
 
         case parsed[:type]
-        when 'CALL'
+        when "CALL"
           handle_call(parsed)
-        when 'CALLRESULT'
+        when "CALLRESULT"
           handle_callresult(parsed)
-        when 'CALLERROR'
+        when "CALLERROR"
           handle_callerror(parsed)
-        when 'PARSE_ERROR'
+        when "PARSE_ERROR"
           log_error("Failed to parse message: #{parsed[:error]}")
           send_callerror(SecureRandom.uuid, "FormationViolation", "Invalid JSON format")
-        when 'UNKNOWN'
+        when "UNKNOWN"
           log_error("Unknown message type: #{parsed[:raw]}")
           send_callerror(SecureRandom.uuid, "ProtocolError", "Unknown message type")
         end
@@ -47,7 +47,7 @@ module Ocpp
 
       def handle_call(parsed)
         # Log incoming message
-        log_message(parsed, 'inbound', 'CALL')
+        log_message(parsed, "inbound", "CALL")
 
         # Route to appropriate handler
         handler_class_name = "Ocpp::Rails::Actions::#{parsed[:action]}Handler"
@@ -71,13 +71,13 @@ module Ocpp
         message = Message.find_by(
           charge_point: charge_point,
           message_id: parsed[:message_id],
-          direction: 'outbound',
-          status: 'pending'
+          direction: "outbound",
+          status: "pending"
         )
 
         if message
           message.update(
-            status: 'received',
+            status: "received",
             payload: message.payload.merge(response: parsed[:payload])
           )
           log_info("Received CALLRESULT for #{message.action}")
@@ -91,13 +91,13 @@ module Ocpp
         message = Message.find_by(
           charge_point: charge_point,
           message_id: parsed[:message_id],
-          direction: 'outbound',
-          status: 'pending'
+          direction: "outbound",
+          status: "pending"
         )
 
         if message
           message.update(
-            status: 'error',
+            status: "error",
             error_message: "#{parsed[:error_code]}: #{parsed[:error_description]}",
             payload: message.payload.merge(error_details: parsed[:details])
           )
@@ -110,7 +110,7 @@ module Ocpp
       def send_callresult(message_id, payload)
         response = Protocol.build_callresult(message_id, payload)
         ChargePointChannel.broadcast_to(charge_point, { message: response })
-        log_message({ message_id: message_id, payload: payload }, 'outbound', 'CALLRESULT')
+        log_message({ message_id: message_id, payload: payload }, "outbound", "CALLRESULT")
       end
 
       def send_callerror(message_id, error_code, error_description, details = {})
@@ -118,8 +118,8 @@ module Ocpp
         ChargePointChannel.broadcast_to(charge_point, { message: response })
         log_message(
           { message_id: message_id, error_code: error_code, error_description: error_description },
-          'outbound',
-          'CALLERROR'
+          "outbound",
+          "CALLERROR"
         )
       end
 
@@ -131,7 +131,7 @@ module Ocpp
           action: parsed[:action],
           message_type: message_type,
           payload: parsed[:payload] || parsed[:error_code] || {},
-          status: direction == 'inbound' ? 'received' : 'sent'
+          status: direction == "inbound" ? "received" : "sent"
         )
       rescue => e
         log_error("Failed to log message: #{e.message}")

@@ -36,7 +36,7 @@ module Ocpp
       def heartbeat!
         old_connected = connected
         update(last_heartbeat_at: Time.current, connected: true)
-        
+
         # Log connection state change only if reconnecting (false -> true)
         if old_connected == false
           begin

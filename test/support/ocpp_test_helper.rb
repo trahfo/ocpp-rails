@@ -143,7 +143,7 @@ module OcppTestHelper
   def build_meter_values_request(connector_id: 1, transaction_id: nil, meter_values: [])
     request = {
       connectorId: connector_id,
-      meterValue: meter_values.presence || [build_meter_value]
+      meterValue: meter_values.presence || [ build_meter_value ]
     }
     request[:transactionId] = transaction_id if transaction_id
     request
@@ -316,17 +316,17 @@ module OcppTestHelper
   # Builds a CALL message frame
   def build_call_message(action:, payload:, message_id: nil)
     message_id ||= SecureRandom.uuid
-    [2, message_id, action, payload]
+    [ 2, message_id, action, payload ]
   end
 
   # Builds a CALLRESULT message frame
   def build_callresult_message(message_id:, payload:)
-    [3, message_id, payload]
+    [ 3, message_id, payload ]
   end
 
   # Builds a CALLERROR message frame
   def build_callerror_message(message_id:, error_code:, error_description:, error_details: {})
-    [4, message_id, error_code, error_description, error_details]
+    [ 4, message_id, error_code, error_description, error_details ]
   end
 
   # Parses an OCPP message from JSON

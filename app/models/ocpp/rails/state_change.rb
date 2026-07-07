@@ -5,7 +5,7 @@ module Ocpp
 
       belongs_to :charge_point, class_name: "Ocpp::Rails::ChargePoint"
 
-      validates :change_type, presence: true, inclusion: { in: ["status", "connection"] }
+      validates :change_type, presence: true, inclusion: { in: [ "status", "connection" ] }
       validates :new_value, presence: true
       validates :connector_id, numericality: { greater_than_or_equal_to: 0, only_integer: true }, allow_nil: true
 

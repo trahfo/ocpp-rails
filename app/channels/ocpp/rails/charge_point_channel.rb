@@ -39,7 +39,7 @@ module Ocpp
           old_connected = @charge_point.connected
           @charge_point.disconnect!
           logger.info "ChargePoint #{@charge_point.identifier} disconnected"
-          
+
           # Log connection state change if it actually changed
           log_connection_change(old_connected, false, "unsubscribed")
         end
@@ -75,7 +75,7 @@ module Ocpp
 
       def log_connection_change(old_connected, new_connected, source)
         return if old_connected == new_connected
-        
+
         begin
           Ocpp::Rails::StateChange.create!(
             charge_point: @charge_point,

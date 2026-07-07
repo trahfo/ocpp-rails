@@ -9,16 +9,16 @@ module Ocpp
         end
 
         def call
-          id_tag = @payload['idTag']
+          id_tag = @payload["idTag"]
           authorization = authorize(id_tag)
 
-          unless authorization[:status] == 'Accepted'
+          unless authorization[:status] == "Accepted"
             ::Rails.logger.warn("[OCPP] StartTransaction from #{@charge_point.identifier} rejected for idTag #{id_tag}: #{authorization[:status]}")
             # OCPP 1.6 requires transactionId in the response; the station
             # must ignore it when the idTag was not accepted.
             return {
-              'idTagInfo' => { 'status' => authorization[:status] },
-              'transactionId' => 0
+              "idTagInfo" => { "status" => authorization[:status] },
+              "transactionId" => 0
             }
           end
 
@@ -30,15 +30,15 @@ module Ocpp
             return accepted_response(existing, authorization)
           end
 
-          started_at = TimestampParser.parse(@payload['timestamp'])
+          started_at = TimestampParser.parse(@payload["timestamp"])
 
           begin
             session = @charge_point.charging_sessions.create!(
-              connector_id: @payload['connectorId'],
+              connector_id: @payload["connectorId"],
               id_tag: id_tag,
-              start_meter_value: @payload['meterStart'],
+              start_meter_value: @payload["meterStart"],
               started_at: started_at.time,
-              status: 'Charging',
+              status: "Charging",
               metadata: session_metadata(started_at)
             )
           rescue ActiveRecord::RecordNotUnique
@@ -52,7 +52,7 @@ module Ocpp
           ::Rails.logger.info("[OCPP] StartTransaction from #{@charge_point.identifier}: Connector #{@payload['connectorId']}, Transaction ID: #{session.transaction_id}")
 
           # Update charge point status
-          @charge_point.update(status: 'Charging')
+          @charge_point.update(status: "Charging")
 
           # Broadcast session started event for real-time UI updates
           broadcast_session_started(session)
@@ -63,16 +63,16 @@ module Ocpp
         private
 
         def active_session
-          @charge_point.charging_sessions.active.find_by(connector_id: @payload['connectorId'])
+          @charge_point.charging_sessions.active.find_by(connector_id: @payload["connectorId"])
         end
 
         def accepted_response(session, authorization)
-          id_tag_info = { 'status' => 'Accepted' }
-          id_tag_info['expiryDate'] = authorization[:expiry_date].iso8601 if authorization[:expiry_date].present?
+          id_tag_info = { "status" => "Accepted" }
+          id_tag_info["expiryDate"] = authorization[:expiry_date].iso8601 if authorization[:expiry_date].present?
 
           {
-            'idTagInfo' => id_tag_info,
-            'transactionId' => session.transaction_id
+            "idTagInfo" => id_tag_info,
+            "transactionId" => session.transaction_id
           }
         end
 
@@ -98,8 +98,8 @@ module Ocpp
           return {} unless started_at.server_fallback?
 
           {
-            'started_at_source' => started_at.source,
-            'raw_start_timestamp' => started_at.raw
+            "started_at_source" => started_at.source,
+            "raw_start_timestamp" => started_at.raw
           }
         end
 
@@ -107,7 +107,7 @@ module Ocpp
           ActionCable.server.broadcast(
             "charge_point_#{@charge_point.id}_sessions",
             {
-              event: 'started',
+              event: "started",
               session: {
                 id: session.id,
                 connector_id: session.connector_id,

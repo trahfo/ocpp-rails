@@ -29,7 +29,7 @@ module Ocpp
         request = build_meter_values_request(
           connector_id: @connector_id,
           transaction_id: @session.transaction_id,
-          meter_values: [build_meter_value]
+          meter_values: [ build_meter_value ]
         )
 
         message = Message.create!(

@@ -9,9 +9,9 @@ module Ocpp
         end
 
         def call
-          connector_id = @payload['connectorId']
-          status = @payload['status']
-          error_code = @payload['errorCode']
+          connector_id = @payload["connectorId"]
+          status = @payload["status"]
+          error_code = @payload["errorCode"]
 
           ::Rails.logger.info("[OCPP] StatusNotification from #{@charge_point.identifier}: Connector #{connector_id} is #{status}")
 
@@ -20,13 +20,13 @@ module Ocpp
             # Status for entire charge point
             old_status = @charge_point.status
             @charge_point.update(status: status)
-            
+
             # Log state change if status actually changed
             log_status_change(nil, old_status, status, {
               error_code: error_code,
-              info: @payload['info'],
-              vendor_id: @payload['vendorId'],
-              vendor_error_code: @payload['vendorErrorCode']
+              info: @payload["info"],
+              vendor_id: @payload["vendorId"],
+              vendor_error_code: @payload["vendorErrorCode"]
             })
           else
             # Status for specific connector - store in metadata
@@ -45,24 +45,24 @@ module Ocpp
         def update_connector_status(connector_id, status, error_code)
           metadata = @charge_point.metadata || {}
           old_status = metadata["connector_#{connector_id}_status"]
-          
+
           metadata["connector_#{connector_id}_status"] = status
           metadata["connector_#{connector_id}_error_code"] = error_code if error_code
           metadata["connector_#{connector_id}_updated_at"] = Time.current.iso8601
           @charge_point.update(metadata: metadata)
-          
+
           # Log state change if status actually changed
           log_status_change(connector_id, old_status, status, {
             error_code: error_code,
-            info: @payload['info'],
-            vendor_id: @payload['vendorId'],
-            vendor_error_code: @payload['vendorErrorCode']
+            info: @payload["info"],
+            vendor_id: @payload["vendorId"],
+            vendor_error_code: @payload["vendorErrorCode"]
           })
         end
 
         def log_status_change(connector_id, old_status, new_status, additional_metadata = {})
           return if old_status == new_status
-          
+
           begin
             Ocpp::Rails::StateChange.create!(
               charge_point: @charge_point,
@@ -81,13 +81,13 @@ module Ocpp
           ActionCable.server.broadcast(
             "charge_point_#{@charge_point.id}_status",
             {
-              connector_id: @payload['connectorId'],
-              status: @payload['status'],
-              error_code: @payload['errorCode'],
-              info: @payload['info'],
-              vendor_id: @payload['vendorId'],
-              vendor_error_code: @payload['vendorErrorCode'],
-              timestamp: @payload['timestamp'] || Time.current.iso8601
+              connector_id: @payload["connectorId"],
+              status: @payload["status"],
+              error_code: @payload["errorCode"],
+              info: @payload["info"],
+              vendor_id: @payload["vendorId"],
+              vendor_error_code: @payload["vendorErrorCode"],
+              timestamp: @payload["timestamp"] || Time.current.iso8601
             }
           )
         rescue => e

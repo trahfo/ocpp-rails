@@ -16,7 +16,7 @@ module Ocpp
 
           # Return current server time
           {
-            'currentTime' => Time.current.iso8601
+            "currentTime" => Time.current.iso8601
           }
         end
       end

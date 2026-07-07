@@ -10,8 +10,8 @@ class CreateOcppStateChanges < ActiveRecord::Migration[8.0]
       t.timestamps
     end
 
-    add_index :ocpp_state_changes, [:charge_point_id, :created_at]
-    add_index :ocpp_state_changes, [:change_type, :created_at]
+    add_index :ocpp_state_changes, [ :charge_point_id, :created_at ]
+    add_index :ocpp_state_changes, [ :change_type, :created_at ]
     add_index :ocpp_state_changes, :created_at
   end
 end

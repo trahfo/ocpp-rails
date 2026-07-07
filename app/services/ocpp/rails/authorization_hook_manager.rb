@@ -1,7 +1,7 @@
 module Ocpp
   module Rails
     module AuthorizationHookManager
-      VALID_STATUSES = ["Accepted", "Blocked", "Expired", "Invalid", "ConcurrentTx"].freeze
+      VALID_STATUSES = [ "Accepted", "Blocked", "Expired", "Invalid", "ConcurrentTx" ].freeze
       DEFAULT_EXPIRY = 1.year
 
       def self.execute_hooks(charge_point_id, id_tag)

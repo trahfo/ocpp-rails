@@ -3,7 +3,7 @@ Ocpp::Rails.setup do |config|
   config.ocpp_version = "1.6"
 
   # Supported OCPP versions (only 1.6 is implemented)
-  config.supported_versions = ["1.6"]
+  config.supported_versions = [ "1.6" ]
 
   # Heartbeat interval in seconds
   config.heartbeat_interval = 300

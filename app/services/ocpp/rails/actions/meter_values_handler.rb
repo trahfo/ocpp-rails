@@ -9,8 +9,8 @@ module Ocpp
         end
 
         def call
-          connector_id = @payload['connectorId']
-          transaction_id = @payload['transactionId']
+          connector_id = @payload["connectorId"]
+          transaction_id = @payload["transactionId"]
 
           # Find active session if transaction ID provided
           session = if transaction_id
@@ -20,11 +20,11 @@ module Ocpp
           end
 
           # Process each meter value set
-          meter_value_sets = @payload['meterValue'] || []
+          meter_value_sets = @payload["meterValue"] || []
           meter_value_sets.each do |meter_value_set|
-            timestamp = TimestampParser.parse(meter_value_set['timestamp'])
+            timestamp = TimestampParser.parse(meter_value_set["timestamp"])
 
-            sampled_values = meter_value_set['sampledValue'] || []
+            sampled_values = meter_value_set["sampledValue"] || []
             sampled_values.each do |sampled_value|
               meter_value = create_meter_value(session, connector_id, timestamp, sampled_value)
               broadcast_meter_value(meter_value) if meter_value
@@ -40,13 +40,13 @@ module Ocpp
         private
 
         def create_meter_value(session, connector_id, timestamp, sampled_value)
-          measurand = sampled_value['measurand'] || 'Energy.Active.Import.Register'
-          unit = sampled_value['unit'] || 'Wh'
+          measurand = sampled_value["measurand"] || "Energy.Active.Import.Register"
+          unit = sampled_value["unit"] || "Wh"
 
           flag_reason = MeterAnomalyDetector.check(
             session: session,
             measurand: measurand,
-            value: sampled_value['value'],
+            value: sampled_value["value"],
             unit: unit
           )
           if flag_reason
@@ -57,12 +57,12 @@ module Ocpp
             charging_session: session,
             connector_id: connector_id,
             measurand: measurand,
-            phase: sampled_value['phase'],
+            phase: sampled_value["phase"],
             unit: unit,
-            context: sampled_value['context'] || 'Sample.Periodic',
-            format: sampled_value['format'] || 'Raw',
-            location: sampled_value['location'] || 'Outlet',
-            value: sampled_value['value'],
+            context: sampled_value["context"] || "Sample.Periodic",
+            format: sampled_value["format"] || "Raw",
+            location: sampled_value["location"] || "Outlet",
+            value: sampled_value["value"],
             timestamp: timestamp.time,
             raw_timestamp: timestamp.raw,
             timestamp_source: timestamp.source,

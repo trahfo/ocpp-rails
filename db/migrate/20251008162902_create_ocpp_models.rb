@@ -1,6 +1,5 @@
 class CreateOcppModels < ActiveRecord::Migration[8.0]
   def change
-
     # Charge Points
     create_table :ocpp_charge_points do |t|
       t.string :identifier, null: false, index: { unique: true }
@@ -38,7 +37,7 @@ class CreateOcppModels < ActiveRecord::Migration[8.0]
       t.timestamps
     end
 
-    add_index :ocpp_charging_sessions, [:charge_point_id, :connector_id]
+    add_index :ocpp_charging_sessions, [ :charge_point_id, :connector_id ]
 
     # Meter Values
     create_table :ocpp_meter_values do |t|
@@ -73,6 +72,6 @@ class CreateOcppModels < ActiveRecord::Migration[8.0]
     end
 
     add_index :ocpp_messages, :message_id
-    add_index :ocpp_messages, [:charge_point_id, :created_at]
+    add_index :ocpp_messages, [ :charge_point_id, :created_at ]
   end
 end

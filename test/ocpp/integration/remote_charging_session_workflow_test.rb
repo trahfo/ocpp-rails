@@ -247,7 +247,7 @@ module Ocpp
 
         # Verify energy progression
         energy_progression = energy_values.order(timestamp: :asc).pluck(:value)
-        assert_equal [3000, 5000, 7000, 9000, 11000], energy_progression
+        assert_equal [ 3000, 5000, 7000, 9000, 11000 ], energy_progression
 
         # ============================================================
         # STEP 8: Central System sends RemoteStopTransaction
@@ -610,7 +610,7 @@ module Ocpp
 
         # Verify action sequence
         action_sequence = messages.map(&:action)
-        expected_sequence = ["RemoteStartTransaction", "StartTransaction", "MeterValues", "RemoteStopTransaction", "StopTransaction"]
+        expected_sequence = [ "RemoteStartTransaction", "StartTransaction", "MeterValues", "RemoteStopTransaction", "StopTransaction" ]
         assert_equal expected_sequence, action_sequence
       end
     end

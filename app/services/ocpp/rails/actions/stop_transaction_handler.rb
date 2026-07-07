@@ -10,33 +10,33 @@ module Ocpp
 
         def call
           # Find the session by the wire transaction ID
-          session = @charge_point.charging_sessions.find_by(transaction_id: @payload['transactionId'])
+          session = @charge_point.charging_sessions.find_by(transaction_id: @payload["transactionId"])
 
           unless session
             ::Rails.logger.error("[OCPP] StopTransaction: Session not found for transaction ID #{@payload['transactionId']}")
             return {
-              'idTagInfo' => {
-                'status' => 'Invalid'
+              "idTagInfo" => {
+                "status" => "Invalid"
               }
             }
           end
 
           # Stop the session
           session.stop!(
-            reason: @payload['reason'] || 'Local',
-            meter_value: @payload['meterStop']
+            reason: @payload["reason"] || "Local",
+            meter_value: @payload["meterStop"]
           )
 
           ::Rails.logger.info("[OCPP] StopTransaction from #{@charge_point.identifier}: Transaction ID #{session.transaction_id}, Energy: #{session.energy_consumed} Wh")
 
           # Process transaction data (meter values during charging) if provided
-          if @payload['transactionData']
-            process_transaction_data(session, @payload['transactionData'])
+          if @payload["transactionData"]
+            process_transaction_data(session, @payload["transactionData"])
           end
 
           # Update charge point status if no other active sessions
           if @charge_point.charging_sessions.active.empty?
-            @charge_point.update(status: 'Available')
+            @charge_point.update(status: "Available")
           end
 
           # Broadcast session stopped event for real-time UI updates
@@ -44,8 +44,8 @@ module Ocpp
 
           # Return authorization status
           {
-            'idTagInfo' => {
-              'status' => 'Accepted'
+            "idTagInfo" => {
+              "status" => "Accepted"
             }
           }
         end
@@ -54,9 +54,9 @@ module Ocpp
 
         def process_transaction_data(session, transaction_data)
           transaction_data.each do |meter_values_set|
-            timestamp = TimestampParser.parse(meter_values_set['timestamp'])
+            timestamp = TimestampParser.parse(meter_values_set["timestamp"])
 
-            sampled_values = meter_values_set['sampledValue'] || []
+            sampled_values = meter_values_set["sampledValue"] || []
             sampled_values.each do |sampled_value|
               create_meter_value(session, timestamp, sampled_value)
             end
@@ -66,13 +66,13 @@ module Ocpp
         end
 
         def create_meter_value(session, timestamp, sampled_value)
-          measurand = sampled_value['measurand'] || 'Energy.Active.Import.Register'
-          unit = sampled_value['unit'] || 'Wh'
+          measurand = sampled_value["measurand"] || "Energy.Active.Import.Register"
+          unit = sampled_value["unit"] || "Wh"
 
           flag_reason = MeterAnomalyDetector.check(
             session: session,
             measurand: measurand,
-            value: sampled_value['value'],
+            value: sampled_value["value"],
             unit: unit
           )
           if flag_reason
@@ -83,12 +83,12 @@ module Ocpp
             charge_point: @charge_point,
             connector_id: session.connector_id,
             measurand: measurand,
-            phase: sampled_value['phase'],
+            phase: sampled_value["phase"],
             unit: unit,
-            context: sampled_value['context'] || 'Transaction.End',
-            format: sampled_value['format'] || 'Raw',
-            location: sampled_value['location'] || 'Outlet',
-            value: sampled_value['value'],
+            context: sampled_value["context"] || "Transaction.End",
+            format: sampled_value["format"] || "Raw",
+            location: sampled_value["location"] || "Outlet",
+            value: sampled_value["value"],
             timestamp: timestamp.time,
             raw_timestamp: timestamp.raw,
             timestamp_source: timestamp.source,
@@ -101,7 +101,7 @@ module Ocpp
           ActionCable.server.broadcast(
             "charge_point_#{@charge_point.id}_sessions",
             {
-              event: 'stopped',
+              event: "stopped",
               session: {
                 id: session.id,
                 connector_id: session.connector_id,

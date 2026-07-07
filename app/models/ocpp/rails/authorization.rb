@@ -5,7 +5,7 @@ module Ocpp
 
       belongs_to :charge_point, class_name: "Ocpp::Rails::ChargePoint"
 
-      validates :status, presence: true, inclusion: { in: ["Accepted", "Blocked", "Expired", "Invalid", "ConcurrentTx"] }
+      validates :status, presence: true, inclusion: { in: [ "Accepted", "Blocked", "Expired", "Invalid", "ConcurrentTx" ] }
       validates :id_tag, presence: true
       validates :charge_point, presence: true
 

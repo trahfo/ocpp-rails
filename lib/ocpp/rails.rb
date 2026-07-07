@@ -42,7 +42,7 @@ module Ocpp
       def initialize
         @ocpp_version = "1.6"
         # Only 1.6 is implemented; expand when 2.x support lands.
-        @supported_versions = ["1.6"]
+        @supported_versions = [ "1.6" ]
         @heartbeat_interval = 300
         @connection_timeout = 30
         @state_change_hooks = []
