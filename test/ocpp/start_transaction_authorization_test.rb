@@ -66,6 +66,33 @@ module Ocpp
         assert_equal "BLOCKED_TAG", authorization.id_tag
       end
 
+      # TC_007: a StartTransaction carrying a cached idTag is authorized inline
+      # by the same hook manager, so the session opens without any preceding
+      # Authorize.req. This test never invokes AuthorizeHandler.
+      test "cached idTag starts a transaction without a preceding Authorize.req" do
+        response = nil
+        assert_difference "Ocpp::Rails::ChargingSession.count", 1 do
+          response = start_transaction(id_tag: "CACHED_TAG")
+        end
+
+        assert_equal "Accepted", response["idTagInfo"]["status"]
+
+        session = @charge_point.charging_sessions.last
+        assert_equal 1, session.connector_id
+        assert_equal "CACHED_TAG", session.id_tag
+      end
+
+      # TC_003 (start leg): an accepted idTag drives the connector into the
+      # Charging state, both on the session and on the charge point.
+      test "accepted idTag moves the session and charge point to Charging" do
+        response = start_transaction(id_tag: "GOOD_TAG")
+
+        session = @charge_point.charging_sessions.last
+        assert_equal response["transactionId"], session.transaction_id
+        assert_equal "Charging", session.status
+        assert_equal "Charging", @charge_point.reload.status
+      end
+
       private
 
       def start_transaction(id_tag:)

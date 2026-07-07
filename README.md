@@ -1,7 +1,7 @@
 # OCPP Rails
 
 [![OCPP](https://img.shields.io/badge/OCPP-1.6-blue)]()
-[![OCTT CS coverage](https://img.shields.io/badge/OCTT%20Central%20System-21%2F76%20cases-orange)](docs/octt-test-plan.md)
+[![OCTT CS coverage](https://img.shields.io/badge/OCTT%20Central%20System-24%2F76%20cases-orange)](docs/octt-test-plan.md)
 [![Status](https://img.shields.io/badge/status-alpha-yellow)]()
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
@@ -12,7 +12,8 @@ OCPP message layer.
 
 > **⚠️ Early alpha — read the compliance status before you rely on this.**
 > The Core charging-session flow (boot, authorize, start/stop transaction, meter
-> values, status) and remote start/stop are implemented. **Most Central-System→Charge-Point
+> values, status), remote start/stop, and connector unlock are implemented **and
+> covered by real handler/job-driven tests**. **Most other Central-System→Charge-Point
 > operations and every optional feature profile (Reservation, Smart Charging,
 > Firmware, Diagnostics, Local Auth List, Security certificates) are not implemented yet.**
 > See [OCPP 1.6 Compliance Status](#-ocpp-16-compliance-status) for the exact,
@@ -24,7 +25,7 @@ OCPP message layer.
 - 📡 **WebSocket Communication** - ActionCable channel handles bidirectional OCPP messages
 - 🔌 **Protocol Handlers** - BootNotification, Authorize, Heartbeat, StartTransaction, StopTransaction, MeterValues, StatusNotification
 - 🗄️ **Data Models** - ChargePoint, ChargingSession, MeterValue, Message (audit log)
-- 🚀 **Remote Control Jobs** - RemoteStartTransaction, RemoteStopTransaction
+- 🚀 **Remote Control Jobs** - RemoteStartTransaction, RemoteStopTransaction, UnlockConnector
 - 📊 **Real-time Broadcasts** - ActionCable broadcasts for status, sessions, and meter values
 - 💾 **SQLite Compatible** - Works with async adapter, no Redis required for development
 
@@ -37,7 +38,7 @@ OCPP message layer.
 
 ### OCPP Compliance
 - ✅ **Core session flow** — inbound BootNotification, Authorize, Heartbeat, Start/StopTransaction, MeterValues, StatusNotification
-- ✅ **Remote Control** — RemoteStartTransaction, RemoteStopTransaction (delivery)
+- ✅ **Remote Control** — RemoteStartTransaction, RemoteStopTransaction, UnlockConnector (delivery + end-to-end flow, tested)
 - ✅ **Message Audit** — every inbound/outbound frame logged for debugging and compliance
 - ✅ **Multi-connector** — one active session per connector, enforced at the DB level
 - 🚧 **Everything else** — see the honest, per-test-case [OCPP 1.6 Compliance Status](#-ocpp-16-compliance-status) below
@@ -53,26 +54,27 @@ role `ocpp-rails` fills, so it is the right yardstick.
 
 | | Cases | What it means |
 |---|---:|---|
-| ✅ **Implemented + tested** | 5 | Works and guarded by a real handler/job-driven test |
-| 🟡 **Implemented — needs test** | 16 | Behavior works, but only simulation-style tests exist; needs a real regression test |
-| 🔴 **Not implemented** | 53 | The message/operation does not exist in the engine yet |
+| ✅ **Implemented + tested** | 24 | Works and guarded by a real handler/job-driven test |
+| 🟡 **Implemented — needs test** | 0 | Behavior works, but only simulation-style tests exist; needs a real regression test |
+| 🔴 **Not implemented** | 50 | The message/operation does not exist in the engine yet |
 | ⚪ **Out of scope** | 2 | TLS handshake (TC_086/087) — belongs in your infra, not app code |
 
-So **~21 of 76 OCTT Central-System cases (28%) are backed by working code**, and only
-5 have real automated coverage. Everything from Reset onward — Configuration, Unlock,
-Local Auth List, Firmware, Diagnostics, Reservation, Remote Trigger, Smart Charging,
-DataTransfer and the Security profiles — is **not built yet**. Treat this gem as a solid
-Core-profile foundation to build on, not a certified CSMS.
+So **24 of 76 OCTT Central-System cases (32%) are backed by working code**, and every
+one now has real automated (handler/job-driven) coverage — the 🟡 bucket is empty.
+Everything from Reset onward — Configuration, Local Auth List, Firmware, Diagnostics,
+Reservation, Remote Trigger, Smart Charging, DataTransfer and the Security profiles 2/3 —
+is **not built yet**. Treat this gem as a solid, well-tested Core-profile foundation to
+build on, not a certified CSMS.
 
 **By feature area** (each links to the detailed Given/When/Then specs):
 
 | Area | Status | Notes |
 |---|---|---|
-| [Boot / Charging Sessions / Cache](docs/octt-test-plan.md#1-boot-charging-sessions-cache) | 🟡 mostly implemented | handlers work; real tests + ClearCache (🔴) missing |
-| [Remote Start / Stop](docs/octt-test-plan.md#2-remote-start--stop) | ✅ delivery / 🟡 full flow | CALL delivery tested; end-to-end session flow untested |
-| [Reset / Unlock / Configuration](docs/octt-test-plan.md#3-reset--unlock--configuration-core-profile) | 🔴 not implemented | no outbound Reset / UnlockConnector / Get·ChangeConfiguration |
-| [Authorize non-happy paths](docs/octt-test-plan.md#4-authorize-non-happy-paths) | 🟡 implemented | rejection logic works; Authorize.req path untested |
-| [Offline / power-loss](docs/octt-test-plan.md#5-offline--power-loss-behavior) | 🟡 implemented | handlers work; replay sequences untested |
+| [Boot / Charging Sessions / Cache](docs/octt-test-plan.md#1-boot-charging-sessions-cache) | ✅ tested / 🔴 ClearCache | Core flow tested end-to-end; only ClearCache missing |
+| [Remote Start / Stop](docs/octt-test-plan.md#2-remote-start--stop) | ✅ implemented + tested | delivery **and** end-to-end session flow tested |
+| [Reset / Unlock / Configuration](docs/octt-test-plan.md#3-reset--unlock--configuration-core-profile) | 🟡 partial | UnlockConnector done + tested; Reset / Get·ChangeConfiguration still 🔴 |
+| [Authorize non-happy paths](docs/octt-test-plan.md#4-authorize-non-happy-paths) | ✅ tested | Invalid / Expired / Blocked on Authorize.req tested |
+| [Offline / power-loss](docs/octt-test-plan.md#5-offline--power-loss-behavior) | ✅ tested | replay + power-loss recovery sequences tested |
 | [Local Authorization List](docs/octt-test-plan.md#6-local-authorization-list) | 🔴 not implemented | no SendLocalList / GetLocalListVersion |
 | [Firmware Management](docs/octt-test-plan.md#7-firmware-management) | 🔴 not implemented | no UpdateFirmware / FirmwareStatusNotification |
 | [Diagnostics](docs/octt-test-plan.md#8-diagnostics) | 🔴 not implemented | no GetDiagnostics / DiagnosticsStatusNotification |
@@ -80,7 +82,7 @@ Core-profile foundation to build on, not a certified CSMS.
 | [Remote Trigger](docs/octt-test-plan.md#10-remotetrigger) | 🔴 not implemented | no TriggerMessage |
 | [Smart Charging](docs/octt-test-plan.md#11-smart-charging) | 🔴 not implemented | no SetChargingProfile / ClearChargingProfile / GetCompositeSchedule |
 | [DataTransfer](docs/octt-test-plan.md#12-datatransfer) | 🔴 not implemented | inbound DataTransfer currently gets a NotSupported CALLERROR |
-| [Security (profiles 1–3)](docs/octt-test-plan.md#13-security-profiles-13) | 🟡 Basic auth only | HTTP Basic Auth works; certificates/secure firmware/TLS not |
+| [Security (profiles 1–3)](docs/octt-test-plan.md#13-security-profiles-13) | 🟡 Basic auth only | HTTP Basic Auth works + tested; certificates/secure firmware/TLS not |
 
 👉 **Full per-test-case breakdown with Given/When/Then specs:** [docs/octt-test-plan.md](docs/octt-test-plan.md).
 It doubles as a ready-made contribution backlog — every 🔴 and 🟡 is a self-contained PR.
@@ -324,15 +326,20 @@ rails test test/ocpp/outbound_delivery_test.rb
 
 **A note on what the tests prove.** The suite has two kinds of tests:
 
-- **Handler/job-driven tests** (e.g. `test/ocpp/message_handler_test.rb`,
-  `outbound_delivery_test.rb`, `station_authentication_test.rb`,
-  `start_transaction_authorization_test.rb`) push real frames through
-  `MessageHandler`/`Actions::*Handler`/jobs and assert on actual behavior. **These are
-  what the compliance status above counts.**
-- **Simulation-style tests** under `test/ocpp/integration/*` build request/response
-  hashes and model rows by hand *without* invoking production code. They document
-  expected message shapes but do **not** prove wire-protocol compliance, so they are
-  not counted toward OCTT coverage.
+- **Handler/job-driven tests** push real frames through
+  `MessageHandler`/`Actions::*Handler`/jobs and assert on actual behavior — e.g.
+  `test/ocpp/message_handler_test.rb`, `outbound_delivery_test.rb`,
+  `station_authentication_test.rb`, `start_transaction_authorization_test.rb`,
+  `authorize_handler_test.rb`, `boot_notification_handler_test.rb`,
+  `status_notification_handler_test.rb`, `unlock_connector_job_test.rb`, and several
+  under `test/ocpp/integration/` (`remote_start_flow_test.rb`, `remote_stop_flow_test.rb`,
+  `offline_transaction_test.rb`, `power_failure_recovery_test.rb`). **These are what the
+  compliance status above counts.**
+- **Simulation-style tests** — the older files under `test/ocpp/integration/` (e.g.
+  `*_transaction_test.rb`, `remote_charging_session_workflow_test.rb`, `authorize_test.rb`,
+  `boot_notification_test.rb`) build request/response hashes and model rows by hand
+  *without* invoking production code. They document expected message shapes but do **not**
+  prove wire-protocol compliance, so they are not counted toward OCTT coverage.
 
 When you implement a 🔴/🟡 case from the [test plan](docs/octt-test-plan.md), please add
 a **handler/job-driven** test for it. See the [Testing Guide](docs/testing.md) for details.
@@ -341,14 +348,15 @@ a **handler/job-driven** test for it. See the [Testing Guide](docs/testing.md) f
 
 ### Implemented today
 - ✅ Core inbound session flow (Boot, Authorize, Heartbeat, Start/StopTransaction, MeterValues, StatusNotification)
-- ✅ Remote start/stop transaction delivery
+- ✅ Remote start/stop transactions (delivery + end-to-end flow) and UnlockConnector — releasable even during an active session
 - ✅ Real-time meter value / status / session broadcasts
 - ✅ Session management, energy/duration tracking, meter-anomaly + timestamp-provenance checks
 - ✅ OCPP-J Security Profile 1 (HTTP Basic Auth) + per-station rate limiting
 - ✅ Complete inbound/outbound message logging
+- ✅ Handler/job-driven OCTT regression suite for all 24 implemented Core-profile cases
 
 ### Not implemented yet (contributions very welcome — see the [test plan](docs/octt-test-plan.md))
-- 🔴 Reset, UnlockConnector, ClearCache, ChangeAvailability
+- 🔴 Reset, ClearCache, ChangeAvailability
 - 🔴 Configuration management (Get/ChangeConfiguration)
 - 🔴 Local Authorization List (SendLocalList, GetLocalListVersion)
 - 🔴 Firmware updates + FirmwareStatusNotification
@@ -376,9 +384,9 @@ self-contained, well-scoped PR. Good first issues:
 - **🟡 Add a real test** for something that already works — pick a 🟡 case (e.g. the
   Authorize non-happy paths, or the boot flow) and write a handler-driven test against
   the spec. No new production code needed.
-- **🔴 Implement one operation** — the outbound Core commands (Reset, UnlockConnector,
+- **🔴 Implement one operation** — the remaining outbound Core commands (Reset,
   Get/ChangeConfiguration, ClearCache) are the most self-contained; they follow the same
-  pattern as the existing `RemoteStartTransactionJob`.
+  pattern as the existing `RemoteStartTransactionJob` / `UnlockConnectorJob`.
 - **🔴 Build out a feature profile** — Reservation, Smart Charging, Firmware, etc. are
   larger efforts; open an issue first so we can sketch the model/API together.
 
@@ -447,7 +455,7 @@ This gem is available as open source under the terms of the [MIT License](LICENS
 ---
 
 **Status**: 🔧 Alpha - Under Active Development  
-**Version**: 0.1.0  
+**Version**: 0.2.0  
 **OCPP**: 1.6 Edition 2  
-**Rails**: 7.0+  
-**Ruby**: 3.0+
+**Rails**: 8.0+  
+**Ruby**: 3.3+

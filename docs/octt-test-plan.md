@@ -10,10 +10,9 @@ System test case — both the ones already implemented and the ones still missin
 Each case has a Given/When/Then (Gherkin) spec so a contributor can turn it into a
 test without re-reading the OCTT PDF.
 
-> **Looking for the at-a-glance status?** The high-level coverage summary
-> (how many cases are done, in progress, or open) lives in the project
-> [README → OCPP 1.6 Compliance Status](../README.md#-ocpp-16-compliance-status).
-> This file is the drill-down behind that table.
+> **This file is the source of truth for per-case status.** The headline numbers in the
+> [README → OCPP 1.6 Compliance Status](../README.md#-ocpp-16-compliance-status) mirror the
+> [Coverage at a glance](#coverage-at-a-glance) table below.
 
 ## How coverage is judged
 
@@ -35,10 +34,121 @@ do **not** prove wire-protocol compliance and are not counted as coverage here.
 
 ---
 
+## Coverage at a glance
+
+_Last updated: 2026-07-07. Measured against OCTT (2025-02) Section 3 (SUT = Central System) — **76** cases._
+
+| | Cases | Meaning |
+|---|---:|---|
+| ✅ Implemented + tested | 24 | Works **and** guarded by a real handler/job-driven test |
+| 🟡 Implemented — needs test | 0 | Behavior works, only simulation-style coverage |
+| 🔴 Not implemented | 50 | Message/operation not in the engine yet |
+| ⚪ Out of scope | 2 | TLS handshake (TC_086/087) — infra, not app code |
+
+**24 of 76 cases (32%) are backed by working code — and every one now has a real regression test** (the 🟡 bucket is empty). The remaining 50 span Reset, ClearCache, Configuration, Local Auth List, Firmware, Diagnostics, Reservation, Remote Trigger, Smart Charging, DataTransfer and Security profiles 2/3.
+
+> The index below covers the **74 cases specified in this document**; the other 2 of the 76 OCTT Section-3 cases are not yet written up here and count as 🔴 Not implemented.
+
+### Full case index
+
+| Case | Feature | Status | Test file / gap |
+|---|---|---|---|
+| **[1. Boot / Charging Sessions / Cache](#1-boot-charging-sessions-cache)** | | | |
+| TC_001 | Cold Boot Charge Point | ✅ | `boot_notification_handler_test.rb` |
+| TC_003 | Regular Charging Session – Plugin First | ✅ | `status_notification_handler_test.rb`, `start_transaction_authorization_test.rb` |
+| TC_004_1 | Regular Charging Session – Identification First | ✅ | authorize + status + start handler tests |
+| TC_004_2 | Identification First – ConnectionTimeOut | ✅ | `status_notification_handler_test.rb` |
+| TC_005_1 | EV Side Disconnected | ✅ | `stop_transaction_reason_test.rb` |
+| TC_007 | Regular Start – Cached Id | ✅ | `start_transaction_authorization_test.rb` |
+| TC_061 | Clear Authorization Data in Cache | 🔴 | no ClearCache operation |
+| **[2. Remote Start / Stop](#2-remote-start--stop)** | | | |
+| TC_010 | Remote Start – Cable Plugged in First | ✅ | `integration/remote_start_flow_test.rb` |
+| TC_011_1 | Remote Start – Remote Start First | ✅ | `integration/remote_start_flow_test.rb` |
+| TC_011_2 | Remote Start – Time Out | ✅ | `integration/remote_start_flow_test.rb` |
+| TC_012 | Remote Stop Charging Session | ✅ | `integration/remote_stop_flow_test.rb` |
+| TC_026 | Remote Start – Rejected | ✅ | `outbound_delivery_test.rb` |
+| TC_028 | Remote Stop – Rejected | ✅ | `outbound_delivery_test.rb` |
+| **[3. Reset / Unlock / Configuration](#3-reset--unlock--configuration-core-profile)** | | | |
+| TC_013 | Hard Reset | 🔴 | no Reset operation |
+| TC_014 | Soft Reset | 🔴 | no Reset operation |
+| TC_017_1 | Unlock Connector – no session | ✅ | `unlock_connector_job_test.rb` |
+| TC_017_2 | Unlock Connector – no session (NotSupported) | ✅ | `unlock_connector_job_test.rb` |
+| TC_018_1 | Unlock Connector – with active session | ✅ | `unlock_connector_job_test.rb` |
+| TC_019_1 | Retrieve all configuration keys | 🔴 | no GetConfiguration |
+| TC_019_2 | Retrieve specific configuration key | 🔴 | no GetConfiguration |
+| TC_021 | Change/set Configuration | 🔴 | no ChangeConfiguration |
+| TC_040_1 | Configuration key – NotSupported | 🔴 | no ChangeConfiguration |
+| TC_040_2 | Configuration Keys – Invalid value | 🔴 | no ChangeConfiguration |
+| **[4. Authorize non-happy paths](#4-authorize-non-happy-paths)** | | | |
+| TC_023_1 | Authorize invalid | ✅ | `authorize_handler_test.rb` |
+| TC_023_2 | Authorize expired | ✅ | `authorize_handler_test.rb` |
+| TC_023_3 | Authorize blocked | ✅ | `authorize_handler_test.rb` |
+| TC_024 | Start Charging Session Lock Failure | ✅ | `status_notification_handler_test.rb` |
+| **[5. Offline / power-loss](#5-offline--power-loss-behavior)** | | | |
+| TC_032_1 | Power failure boot, stop transaction(s) | ✅ | `integration/power_failure_recovery_test.rb` |
+| TC_037_1 | Offline Start – Valid IdTag | ✅ | `integration/offline_transaction_test.rb` |
+| TC_037_3 | Offline Start – Invalid IdTag | ✅ | `integration/offline_transaction_test.rb` |
+| TC_039 | Offline Transaction | ✅ | `integration/offline_transaction_test.rb` |
+| **[6. Local Authorization List](#6-local-authorization-list)** | | | |
+| TC_042_1 | Get Local List Version (not supported) | 🔴 | no GetLocalListVersion |
+| TC_042_2 | Get Local List Version (empty) | 🔴 | no GetLocalListVersion |
+| TC_043_1 | Send Local Authorization List – NotSupported | 🔴 | no SendLocalList |
+| TC_043_3 | Send Local Authorization List – Failed | 🔴 | no SendLocalList |
+| TC_043_4 | Send Local Authorization List – Full | 🔴 | no SendLocalList |
+| TC_043_5 | Send Local Authorization List – Differential | 🔴 | no SendLocalList |
+| **[7. Firmware Management](#7-firmware-management)** | | | |
+| TC_044_1 | Firmware Update – Download and Install | 🔴 | no UpdateFirmware |
+| TC_044_2 | Firmware Update – Download Failed | 🔴 | no UpdateFirmware |
+| TC_044_3 | Firmware Update – Installation Failed | 🔴 | no UpdateFirmware |
+| **[8. Diagnostics](#8-diagnostics)** | | | |
+| TC_045_1 | Get Diagnostics | 🔴 | no GetDiagnostics |
+| TC_045_2 | Get Diagnostics – Upload Failed | 🔴 | no GetDiagnostics |
+| **[9. Reservation](#9-reservation)** | | | |
+| TC_046 | Reservation of a Connector – Transaction | 🔴 | no ReserveNow |
+| TC_047 | Reservation of a Connector – Expire | 🔴 | no ReserveNow |
+| TC_048_1 | Reservation – Faulted | 🔴 | no ReserveNow |
+| TC_048_2 | Reservation – Occupied | 🔴 | no ReserveNow |
+| TC_048_3 | Reservation – Unavailable | 🔴 | no ReserveNow / ChangeAvailability |
+| TC_048_4 | Reservation – Rejected | 🔴 | no ReserveNow |
+| TC_049 | Reservation of a Charge Point (connectorId 0) | 🔴 | no ReserveNow |
+| TC_051 | Cancel Reservation | 🔴 | no CancelReservation |
+| TC_052 | Cancel Reservation – Rejected | 🔴 | no CancelReservation |
+| TC_053 | Use a reserved Connector with parentIdTag | 🔴 | no ReserveNow |
+| **[10. RemoteTrigger](#10-remotetrigger)** | | | |
+| TC_054 | Trigger Message | 🔴 | no TriggerMessage |
+| TC_055 | Trigger Message – Rejected | 🔴 | no TriggerMessage |
+| **[11. Smart Charging](#11-smart-charging)** | | | |
+| TC_056 | Central Smart Charging – TxDefaultProfile | 🔴 | no SetChargingProfile |
+| TC_057 | Central Smart Charging – TxProfile | 🔴 | no SetChargingProfile |
+| TC_066 | Get Composite Schedule | 🔴 | no GetCompositeSchedule |
+| TC_067 | Clear Charging Profile | 🔴 | no ClearChargingProfile |
+| TC_059 | Remote Start Transaction with Charging Profile | 🔴 | job lacks chargingProfile arg |
+| **[12. DataTransfer](#12-datatransfer)** | | | |
+| TC_064 | Data Transfer to a Central System | 🔴 | no inbound DataTransfer handler |
+| **[13. Security (profiles 1–3)](#13-security-profiles-13)** | | | |
+| TC_073 | Update Charge Point Password (Basic Auth) | 🔴 | needs ChangeConfiguration |
+| TC_074 | Update Charge Point Certificate | 🔴 | no certificate management |
+| TC_075_1 | Install certificate (Manufacturer root) | 🔴 | no InstallCertificate |
+| TC_075_2 | Install certificate (CentralSystem root) | 🔴 | no InstallCertificate |
+| TC_076 | Delete a specific certificate | 🔴 | no DeleteCertificate |
+| TC_077 | Invalid ChargePointCertificate Security Event | 🔴 | no SecurityEventNotification |
+| TC_078 | Invalid CentralSystemCertificate Security Event | 🔴 | no SecurityEventNotification |
+| TC_079 | Get Security Log | 🔴 | no GetLog |
+| TC_080 | Secure Firmware Update | 🔴 | no SignedUpdateFirmware |
+| TC_081 | Secure Firmware Update – Invalid Signature | 🔴 | no SignedUpdateFirmware |
+| TC_083 | Upgrade Charge Point Security Profile | 🔴 | needs ChangeConfiguration + Reset |
+| TC_085 | Basic Authentication – Valid combination | ✅ | `station_authentication_test.rb` |
+| TC_086 | TLS server-side certificate | ⚪ | infra (reverse proxy) |
+| TC_087 | TLS client-side certificate | ⚪ | infra (reverse proxy) |
+
+> **Reading the detail sections below:** their per-case **Existing coverage** / **Suggested file** notes were written *before* the July 2026 test round. The **Status** line (updated) and the index above are authoritative — for any ✅ case, its **Suggested file** is the test that now exists.
+
+---
+
 ## 1. Boot, Charging Sessions, Cache
 
 ### TC_001_CSMS — Cold Boot Charge Point
-**Ref:** 3.1.1 · **Status:** 🟡 Implemented — needs test
+**Ref:** 3.1.1 · **Status:** ✅ Implemented + tested
 **Existing coverage:** `BootNotificationHandler`, `HeartbeatHandler`, `StatusNotificationHandler` all exist and work; only simulation-style assertions exist today (`test/ocpp/integration/boot_notification_test.rb`), which do not drive the handlers.
 **Suggested file:** `test/ocpp/boot_notification_handler_test.rb`
 
@@ -63,7 +173,7 @@ Feature: Cold boot registration
 ```
 
 ### TC_003_CSMS — Regular Charging Session - Plugin First
-**Ref:** 3.2.1 · **Status:** 🟡 Implemented — needs test
+**Ref:** 3.2.1 · **Status:** ✅ Implemented + tested
 **Existing coverage:** the accepted StartTransaction path is asserted by `test/ocpp/start_transaction_authorization_test.rb`; the StatusNotification (Preparing/Charging) and Authorize.req legs are not driven by any real test.
 **Suggested file:** `test/ocpp/status_notification_handler_test.rb` + extend `start_transaction_authorization_test.rb`
 
@@ -87,7 +197,7 @@ Feature: Cable plugged in before authorization
 ```
 
 ### TC_004_1_CSMS — Regular Charging Session – Identification First
-**Ref:** 3.2.2 · **Status:** 🟡 Implemented — needs test
+**Ref:** 3.2.2 · **Status:** ✅ Implemented + tested
 **Existing coverage:** same handlers as TC_003; no real end-to-end test of the identification-first ordering.
 **Suggested file:** `test/ocpp/status_notification_handler_test.rb`
 
@@ -102,7 +212,7 @@ Feature: Identification before cable plug-in
 ```
 
 ### TC_004_2_CSMS — Identification First - ConnectionTimeOut
-**Ref:** 3.2.3 · **Status:** 🟡 Implemented — needs test
+**Ref:** 3.2.3 · **Status:** ✅ Implemented + tested
 **Existing coverage:** `StatusNotificationHandler` acknowledges any status; no timer logic is required of the CS. No real test asserts the Available acknowledgement.
 **Suggested file:** `test/ocpp/status_notification_handler_test.rb`
 
@@ -115,7 +225,7 @@ Feature: Connector reverts to Available after connection timeout
 ```
 
 ### TC_005_1_CSMS — EV Side Disconnected (StopTransactionOnEVSideDisconnect=true, UnlockConnectorOnEVSideDisconnect=true)
-**Ref:** 3.2.4 · **Status:** 🟡 Implemented — needs test
+**Ref:** 3.2.4 · **Status:** ✅ Implemented + tested
 **Existing coverage:** `StopTransactionHandler` accepts any stop reason and the session→connector state transitions work; `test/ocpp/wire_transaction_id_test.rb` covers stop resolution generically. The EVDisconnected-specific status sequence is not asserted.
 **Suggested file:** `test/ocpp/stop_transaction_reason_test.rb`
 
@@ -139,7 +249,7 @@ Feature: EV-side disconnect stops the transaction
 ```
 
 ### TC_007_CSMS — Regular Start Charging Session – Cached Id
-**Ref:** 3.3.1 · **Status:** 🟡 Implemented — needs test
+**Ref:** 3.3.1 · **Status:** ✅ Implemented + tested
 **Existing coverage:** `test/ocpp/start_transaction_authorization_test.rb` asserts an accepted idTag starts a session; it does not explicitly assert the "no Authorize.req was sent first" (cached-id) semantics.
 **Suggested file:** `test/ocpp/start_transaction_authorization_test.rb`
 
@@ -177,7 +287,7 @@ Feature: Central System clears the charge point's authorization cache
 ## 2. Remote Start / Stop
 
 ### TC_010_CSMS — Remote Start – Cable Plugged in First
-**Ref:** 3.4.1 · **Status:** ✅ Implemented + tested *(delivery)* / 🟡 *(follow-on session flow)*
+**Ref:** 3.4.1 · **Status:** ✅ Implemented + tested
 **Existing coverage:** `test/ocpp/outbound_delivery_test.rb` asserts `RemoteStartTransactionJob` delivers the correct CALL frame on the station's stream and records a pending Message. The subsequent Authorize→StartTransaction chain triggered by the remote start is not yet asserted end-to-end.
 **Suggested file:** `test/ocpp/integration/remote_start_flow_test.rb` (real handlers, not the existing simulation-style file of the same name)
 
@@ -192,7 +302,7 @@ Feature: Remote start transaction end-to-end
 ```
 
 ### TC_011_1_CSMS — Remote Start – Remote Start First
-**Ref:** 3.4.2 · **Status:** ✅ Implemented + tested *(delivery)* / 🟡 *(follow-on session flow)*
+**Ref:** 3.4.2 · **Status:** ✅ Implemented + tested
 **Existing coverage:** delivery covered by `test/ocpp/outbound_delivery_test.rb`; remote-first ordering not asserted end-to-end.
 **Suggested file:** `test/ocpp/integration/remote_start_flow_test.rb`
 
@@ -206,7 +316,7 @@ Feature: Remote start issued before plug-in
 ```
 
 ### TC_011_2_CSMS — Remote Start – Time Out
-**Ref:** 3.4.3 · **Status:** ✅ Implemented + tested *(delivery)* / 🟡 *(timeout flow)*
+**Ref:** 3.4.3 · **Status:** ✅ Implemented + tested
 **Existing coverage:** delivery covered by `test/ocpp/outbound_delivery_test.rb`; the timeout is a charge-point-side behavior, the CS only needs to acknowledge the resulting StatusNotifications (untested).
 **Suggested file:** `test/ocpp/integration/remote_start_flow_test.rb`
 
@@ -220,7 +330,7 @@ Feature: Remote start times out because the cable is never plugged in
 ```
 
 ### TC_012_CSMS — Remote Stop Charging Session
-**Ref:** 3.4.4 · **Status:** ✅ Implemented + tested *(delivery)* / 🟡 *(follow-on stop flow)*
+**Ref:** 3.4.4 · **Status:** ✅ Implemented + tested
 **Existing coverage:** `test/ocpp/outbound_delivery_test.rb` asserts `RemoteStopTransactionJob` delivers the correct CALL; the resulting StopTransaction(reason=Remote)→Finishing→Available sequence is not asserted end-to-end.
 **Suggested file:** `test/ocpp/integration/remote_stop_flow_test.rb`
 
@@ -237,7 +347,7 @@ Feature: Remote stop transaction end-to-end
 ```
 
 ### TC_026_CSMS — Remote Start – Rejected
-**Ref:** 3.9.1 · **Status:** 🟡 Implemented — needs test
+**Ref:** 3.9.1 · **Status:** ✅ Implemented + tested
 **Existing coverage:** `MessageHandler#handle_callresult` stores any inbound `.conf` against the pending Message; no test asserts the Rejected case specifically.
 **Suggested file:** `test/ocpp/outbound_delivery_test.rb` (extend)
 
@@ -251,7 +361,7 @@ Feature: Central System handles a rejected remote start
 ```
 
 ### TC_028_CSMS — Remote Stop – Rejected
-**Ref:** 3.9.2 · **Status:** 🟡 Implemented — needs test
+**Ref:** 3.9.2 · **Status:** ✅ Implemented + tested
 **Existing coverage:** generic `.conf` handling as above; no dedicated test.
 **Suggested file:** `test/ocpp/outbound_delivery_test.rb` (extend)
 
@@ -300,8 +410,8 @@ Feature: Central System triggers a soft reset
 ```
 
 ### TC_017_1_CSMS / TC_017_2_CSMS — Unlock Connector (no session)
-**Ref:** 3.6.1–3.6.2 · **Status:** 🔴 Not implemented
-**Gap:** No outbound `UnlockConnector` operation.
+**Ref:** 3.6.1–3.6.2 · **Status:** ✅ Implemented + tested
+**Implemented:** `UnlockConnectorJob` (`app/jobs/ocpp/rails/unlock_connector_job.rb`), covered by `test/ocpp/unlock_connector_job_test.rb`.
 **Suggested file:** `test/ocpp/unlock_connector_job_test.rb`
 
 ```gherkin
@@ -323,7 +433,7 @@ Feature: Central System unlocks a connector with no active session
 ```
 
 ### TC_018_1_CSMS — Unlock Connector - With Charging Session
-**Ref:** 3.6.3 · **Status:** 🔴 Not implemented
+**Ref:** 3.6.3 · **Status:** ✅ Implemented + tested
 **Suggested file:** `test/ocpp/unlock_connector_job_test.rb`
 
 ```gherkin
@@ -421,7 +531,7 @@ Feature: Central System handles a rejected configuration value
 ## 4. Authorize non-happy paths
 
 ### TC_023_1_CSMS — Authorize invalid
-**Ref:** 3.8.1 · **Status:** 🟡 Implemented — needs test
+**Ref:** 3.8.1 · **Status:** ✅ Implemented + tested
 **Existing coverage:** `AuthorizeHandler` returns the hook's status, and rejection-blocks-a-transaction is asserted for the StartTransaction path in `test/ocpp/start_transaction_authorization_test.rb`. The Authorize.req path itself has no dedicated test.
 **Suggested file:** `test/ocpp/authorize_handler_test.rb`
 
@@ -434,7 +544,7 @@ Feature: Authorize rejects an invalid idTag
 ```
 
 ### TC_023_2_CSMS — Authorize expired
-**Ref:** 3.8.2 · **Status:** 🟡 Implemented — needs test
+**Ref:** 3.8.2 · **Status:** ✅ Implemented + tested
 **Existing coverage:** expired-blocks-a-transaction is asserted for StartTransaction in `test/ocpp/start_transaction_authorization_test.rb`; the Authorize.req path is not.
 **Suggested file:** `test/ocpp/authorize_handler_test.rb`
 
@@ -447,7 +557,7 @@ Feature: Authorize rejects an expired idTag
 ```
 
 ### TC_023_3_CSMS — Authorize blocked
-**Ref:** 3.8.3 · **Status:** 🟡 Implemented — needs test
+**Ref:** 3.8.3 · **Status:** ✅ Implemented + tested
 **Existing coverage:** blocked-blocks-a-transaction is asserted for StartTransaction in `test/ocpp/start_transaction_authorization_test.rb`; the Authorize.req path is not.
 **Suggested file:** `test/ocpp/authorize_handler_test.rb`
 
@@ -460,7 +570,7 @@ Feature: Authorize rejects a blocked idTag
 ```
 
 ### TC_024_CSMS — Start Charging Session Lock Failure
-**Ref:** 3.8.4 · **Status:** 🟡 Implemented — needs test
+**Ref:** 3.8.4 · **Status:** ✅ Implemented + tested
 **Existing coverage:** `StatusNotificationHandler` stores `errorCode` in connector metadata and logs a StateChange; no real test asserts the ConnectorLockFailure/Faulted case.
 **Suggested file:** `test/ocpp/status_notification_handler_test.rb`
 
@@ -484,7 +594,7 @@ Feature: Connector lock failure is reported and acknowledged
 ## 5. Offline / power-loss behavior
 
 ### TC_032_1_CSMS — Power failure boot, configured to stop transaction(s)
-**Ref:** 3.11.1 · **Status:** 🟡 Implemented — needs test
+**Ref:** 3.11.1 · **Status:** ✅ Implemented + tested
 **Existing coverage:** boot re-registration and stop-with-reason are individually implemented; no test drives the mid-transaction reboot → Finishing/Available → StopTransaction(PowerLoss) sequence.
 **Suggested file:** `test/ocpp/integration/power_failure_recovery_test.rb`
 
@@ -508,7 +618,7 @@ Feature: Charge point recovers from a power failure mid-transaction
 ```
 
 ### TC_037_1_CSMS — Offline Start Transaction - Valid IdTag
-**Ref:** 3.12.1 · **Status:** 🟡 Implemented — needs test
+**Ref:** 3.12.1 · **Status:** ✅ Implemented + tested
 **Existing coverage:** `StartTransactionHandler` accepts past-dated timestamps (timestamp provenance is covered by `test/ocpp/timestamp_provenance_test.rb`); the offline-queue-replay case isn't asserted specifically.
 **Suggested file:** `test/ocpp/integration/offline_transaction_test.rb`
 
@@ -522,7 +632,7 @@ Feature: Charge point submits a transaction started while offline
 ```
 
 ### TC_037_3_CSMS — Offline Start Transaction - Invalid IdTag, StopTransactionOnInvalidId=true
-**Ref:** 3.12.2 · **Status:** 🟡 Implemented — needs test
+**Ref:** 3.12.2 · **Status:** ✅ Implemented + tested
 **Existing coverage:** invalid-idTag rejection is covered by `test/ocpp/start_transaction_authorization_test.rb`; the offline unwind sequence (Charging→DeAuthorized→Finishing) isn't.
 **Suggested file:** `test/ocpp/integration/offline_transaction_test.rb`
 
@@ -538,7 +648,7 @@ Feature: Charge point submits an offline transaction with an idTag that turns ou
 ```
 
 ### TC_039_CSMS — Offline Transaction
-**Ref:** 3.12.3 · **Status:** 🟡 Implemented — needs test
+**Ref:** 3.12.3 · **Status:** ✅ Implemented + tested
 **Existing coverage:** start and stop handlers work; no test drives a fully-offline start+stop pair replayed on reconnect.
 **Suggested file:** `test/ocpp/integration/offline_transaction_test.rb`
 
@@ -1234,7 +1344,7 @@ Feature: Central System upgrades the station to a higher security profile
 ```
 
 ### TC_085_CSMS — Basic Authentication - Valid username/password combination
-**Ref:** 3.21 (table 190) · **Status:** ✅ Implemented + tested / 🟡 *(post-connect boot sequence)*
+**Ref:** 3.21 (table 190) · **Status:** ✅ Implemented + tested
 **Existing coverage:** `test/ocpp/station_authentication_test.rb` (`ChannelAuthenticationTest`) asserts that a station presenting valid HTTP Basic credentials is accepted and streams for its charge point, and that wrong/missing/cross-identity credentials are rejected. The follow-on BootNotification/StatusNotification sequence after a successful connect is not asserted in the same test.
 **Suggested file:** `test/ocpp/station_authentication_test.rb` (extend)
 

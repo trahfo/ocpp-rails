@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-07-07
+
+### Added
+- **UnlockConnector** outbound operation (`UnlockConnectorJob`) — releases a connector, including during an active charging session (OCTT TC_017_1/TC_017_2/TC_018_1).
+- **OCTT Core-profile regression suite** — real handler/job-driven tests now guard **24 of 76** OCTT Central-System cases; the "implemented but untested" backlog is cleared. Covers cold boot, Authorize non-happy paths (Invalid/Expired/Blocked), StatusNotification (incl. ConnectorLockFailure/Faulted), EV-side disconnect, cached-id start, remote start/stop end-to-end and rejection, offline + power-loss replay, and the post-connect boot sequence. See `docs/octt-test-plan.md` for the per-case breakdown.
+
+### Changed
+- Upgraded Rails to **8.1.3**, minitest to **6.0.6**, and rubocop to **1.88.1** (mutually compatible on Ruby 4.0); removed the temporary `minitest ~> 5.25` pin now that Rails 8.1 realigned its test line-filtering with minitest 6's `Runnable#run`.
+
 ### Security
 - **Charge points now authenticate** (OCPP-J Security Profile 1, HTTP Basic Auth on the WebSocket upgrade). A per-station credential is stored as a SHA-256 digest (`auth_password_digest`) and compared in constant time; unauthenticated or mismatched subscriptions are rejected before streaming and logged. **Breaking**: `authentication_mode` defaults to `:basic`; set `:none` explicitly to restore the old anonymous behaviour. See `docs/security.md`.
 - CALLERROR frames no longer echo internal exception messages to the station; the peer receives a generic description plus an `errorRef` correlation id, and the full exception stays in the server log.
@@ -75,4 +84,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Database Support:** PostgreSQL, MySQL, SQLite
 - **WebSocket Protocol:** RFC 6455 via ActionCable
 
+[0.2.0]: https://github.com/trahfo/ocpp-rails/releases/tag/v0.2.0
 [0.1.0]: https://github.com/trahfo/ocpp-rails/releases/tag/v0.1.0

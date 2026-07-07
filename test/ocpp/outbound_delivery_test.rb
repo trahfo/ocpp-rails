@@ -40,6 +40,43 @@ module Ocpp
         assert_equal({ "transactionId" => session.transaction_id }, frame[3])
       end
 
+      # TC_026 (Remote Start - Rejected): a station that rejects the remote
+      # start still answers with a CALLRESULT; the CSMS records it against the
+      # pending message and must NOT open a charging session on rejection.
+      test "rejected RemoteStartTransaction is recorded without opening a session" do
+        RemoteStartTransactionJob.perform_now(@charge_point.id, 1, "RFID1")
+
+        message = Message.find_by!(charge_point: @charge_point, action: "RemoteStartTransaction")
+        MessageHandler.new(
+          @charge_point,
+          [ 3, message.message_id, { "status" => "Rejected" } ].to_json
+        ).process
+
+        assert_equal "received", message.reload.status
+        assert_equal 0, @charge_point.charging_sessions.count,
+          "a rejected remote start must not open a charging session"
+      end
+
+      # TC_028 (Remote Stop - Rejected): the station rejects the remote stop and
+      # answers with a CALLRESULT. The CSMS records it against the pending
+      # message and must leave the running session active and untouched.
+      test "rejected RemoteStopTransaction leaves the active session untouched" do
+        session = create_charging_session(@charge_point, connector_id: 1, status: "Charging")
+
+        RemoteStopTransactionJob.perform_now(@charge_point.id, session.transaction_id)
+
+        message = Message.find_by!(charge_point: @charge_point, action: "RemoteStopTransaction")
+        MessageHandler.new(
+          @charge_point,
+          [ 3, message.message_id, { "status" => "Rejected" } ].to_json
+        ).process
+
+        assert_equal "received", message.reload.status
+        assert session.reload.active?,
+          "a rejected remote stop must leave the session active"
+        assert_nil session.stopped_at
+      end
+
       private
 
       def last_frame_on_station_stream

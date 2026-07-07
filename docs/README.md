@@ -1,6 +1,6 @@
 # OCPP Rails Documentation
 
-Welcome to the OCPP Rails documentation! This Rails engine provides complete OCPP 1.6 protocol implementation for EV charging station management.
+Welcome to the OCPP Rails documentation! This Rails engine provides an OCPP 1.6 **Central System** (CSMS) backend — the Core charging-session profile plus remote start/stop and connector unlock — for EV charging station management. See the [OCPP 1.6 Compliance Status](../README.md#-ocpp-16-compliance-status) and the [per-case test plan](octt-test-plan.md) for exactly what is (and isn't) implemented.
 
 ## 📚 Documentation
 
@@ -21,6 +21,7 @@ Welcome to the OCPP Rails documentation! This Rails engine provides complete OCP
 - **[Troubleshooting](troubleshooting.md)** - Common issues and solutions
 
 ### Reference
+- **[OCTT Compliance Test Plan](octt-test-plan.md)** - Per-case OCPP 1.6 Central-System status (the source of truth)
 - **[OCPP 1.6 Specification](../ocpp-1.6_edition_2.md)** - Full OCPP 1.6 Edition 2 specification
 - **[Changelog](../CHANGELOG.md)** - Version history and release notes
 
@@ -59,27 +60,30 @@ Welcome to the OCPP Rails documentation! This Rails engine provides complete OCP
 
 ## Features Overview
 
-### ✅ Implemented (v0.1.0)
-- Remote start/stop transactions
-- Real-time meter value monitoring (22+ measurands)
-- Session management and tracking
-- Authorization support (RFID/ID tags)
-- Complete message audit trail
-- Multi-connector support
-- Energy consumption calculations
-- WebSocket communication (ActionCable)
+_See the [per-case OCTT test plan](octt-test-plan.md) for the authoritative status. **24 of 76**
+OCTT Central-System cases are implemented and backed by real handler/job-driven tests._
 
-### 🚧 In Development
-- Configuration management
-- Firmware updates
-- Diagnostics upload
+### ✅ Implemented + tested
+- Core inbound session flow: Boot, Authorize, Heartbeat, Start/StopTransaction, MeterValues, StatusNotification
+- Remote start/stop transactions (delivery + end-to-end flow)
+- UnlockConnector — release a connector, including during an active session
+- Real-time meter value monitoring (22+ measurands) + status / session broadcasts
+- Session management, energy/duration tracking, meter-anomaly + timestamp-provenance checks
+- Authorization support (RFID/ID tags) incl. Invalid / Expired / Blocked paths
+- OCPP-J Security Profile 1 (HTTP Basic Auth) + per-station rate limiting
+- Multi-connector support and a complete message audit trail
 
-### 📝 Planned
-- Reservation system
-- Full smart charging profiles
-- Local authorization list sync
-- Admin dashboard UI
-- OCPP 2.0.1 support
+### 🔴 Not implemented yet
+- Reset, ClearCache, ChangeAvailability
+- Configuration management (Get/ChangeConfiguration)
+- Local authorization list sync (SendLocalList, GetLocalListVersion)
+- Firmware updates + Diagnostics upload
+- Reservation system (ReserveNow, CancelReservation)
+- Remote Trigger (TriggerMessage)
+- Smart charging profiles (Set/Clear/GetCompositeSchedule)
+- Inbound DataTransfer handling
+- Security profiles 2/3 (certificates, secure firmware, security events)
+- Admin dashboard UI · OCPP 2.0.1 support
 
 ## Support
 
@@ -98,5 +102,5 @@ Contributions are welcome! See our [Contributing Guide](../CONTRIBUTING.md) for 
 ---
 
 **Last Updated**: 2025-10-17  
-**Version**: 0.1.0  
+**Version**: 0.2.0  
 **OCPP**: 1.6 Edition 2

@@ -142,6 +142,27 @@ module Ocpp
         assert subscription.rejected?
       end
 
+      # OCTT TC_085 (Basic Authentication valid) plus the post-connect boot sequence:
+      # once a station is authenticated and streaming, BootNotification is accepted
+      # and a per-connector StatusNotification is acknowledged.
+      test "a station with valid credentials completes registration then boot proceeds" do
+        stub_connection(request: request_with_auth("CP001", "station-secret"))
+
+        subscribe charge_point_id: "CP001"
+
+        assert subscription.confirmed?
+        assert_has_stream_for @charge_point
+
+        resp = Actions::BootNotificationHandler.new(
+          @charge_point, SecureRandom.uuid, build_boot_notification_request.stringify_keys
+        ).call
+        assert_equal "Accepted", resp["status"]
+
+        assert_equal({}, Actions::StatusNotificationHandler.new(
+          @charge_point, SecureRandom.uuid, { "connectorId" => 1, "status" => "Available", "errorCode" => "NoError" }
+        ).call)
+      end
+
       private
 
       def request_with_auth(username, password)
