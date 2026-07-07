@@ -24,8 +24,11 @@ module Ocpp
       isolate_namespace Ocpp::Rails
 
       initializer "ocpp_rails.action_cable", before: "actioncable.set_configs" do |app|
-        # Automatically use async adapter in development and test
-        app.config.action_cable.adapter ||= :async if ::Rails.env.development? || ::Rails.env.test?
+        # Automatically use the async adapter in development and test
+        # when the app has no config/cable.yml of its own
+        if (::Rails.env.development? || ::Rails.env.test?) && !app.root.join("config/cable.yml").exist?
+          app.config.action_cable.cable ||= { "adapter" => "async" }
+        end
       end
     end
   end

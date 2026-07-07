@@ -5,11 +5,14 @@ module Ocpp
 
       config.generators.api_only = true
 
-      # Configure ActionCable to use async adapter (works with SQLite)
+      # Configure ActionCable to use the async adapter (works with SQLite)
       # This is suitable for development, testing, and single-server deployments
-      # For production with multiple servers, use Redis or PostgreSQL adapter
+      # For production with multiple servers, use Redis or PostgreSQL adapter.
+      # An existing config/cable.yml always takes precedence.
       initializer "ocpp_rails.action_cable", before: "actioncable.set_configs" do |app|
-        app.config.action_cable.adapter ||= :async if ::Rails.env.development? || ::Rails.env.test?
+        if (::Rails.env.development? || ::Rails.env.test?) && !app.root.join("config/cable.yml").exist?
+          app.config.action_cable.cable ||= { "adapter" => "async" }
+        end
       end
     end
   end
