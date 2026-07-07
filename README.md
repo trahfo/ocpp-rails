@@ -96,7 +96,16 @@ end
 ws://your-server:3000/ocpp/cable
 ```
 
-For detailed setup instructions, see the [Getting Started Guide](docs/getting-started.md).
+Stations authenticate with HTTP Basic Auth on the WebSocket upgrade
+(OCPP-J Security Profile 1, enabled by default). Provision a per-station
+credential first:
+
+```ruby
+charge_point.update!(auth_password: SecureRandom.base58(32))
+```
+
+For detailed setup instructions, see the [Getting Started Guide](docs/getting-started.md)
+and the [Security Guide](docs/security.md).
 
 ## 💡 Usage Examples
 

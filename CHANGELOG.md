@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Security
+- **Charge points now authenticate** (OCPP-J Security Profile 1, HTTP Basic Auth on the WebSocket upgrade). A per-station credential is stored as a SHA-256 digest (`auth_password_digest`) and compared in constant time; unauthenticated or mismatched subscriptions are rejected before streaming and logged. **Breaking**: `authentication_mode` defaults to `:basic`; set `:none` explicitly to restore the old anonymous behaviour. See `docs/security.md`.
+- CALLERROR frames no longer echo internal exception messages to the station; the peer receives a generic description plus an `errorRef` correlation id, and the full exception stays in the server log.
+- Per-station ingress rate limiting: inbound messages (default 300/min) are dropped before processing or audit writes, connection attempts (default 12/min) are rejected before authentication. Both configurable, `nil` disables.
+
+### Fixed
+- Remote start/stop commands never reached the station: the jobs broadcast to a stream nothing subscribed to. They now use `ChargePointChannel.broadcast_to`, the same relay path as CALLRESULTs.
+- The OCPP `transactionId` is a dedicated random 31-bit integer in `transaction_id` (unique), no longer the sequential ActiveRecord primary key; StopTransaction and MeterValues resolve sessions via that column. **Breaking**: the column changed from string (unused UUIDs) to bigint; pass `session.transaction_id` (not `session.id`) to `RemoteStopTransactionJob`.
+- StartTransaction now honors the authorization hooks: a non-Accepted idTag gets the real status back and opens no session (the decision is persisted as an `Authorization` record).
+- At most one active session per connector: duplicate/replayed StartTransaction resumes the open transaction, and a partial unique index enforces the invariant under races.
+- Unparseable station timestamps are no longer silently replaced by server time: meter values keep the raw value and a `timestamp_source` flag, sessions are flagged in `metadata`.
+- Energy register anomalies (rollover, meter swap, implausible jumps) are flagged (`flagged`/`flag_reason`, kWh normalised to Wh) instead of silently producing negative or garbage energy totals; a session stopped below `meterStart` records `nil` energy and is flagged.
+- Async hook jobs retry again on Rails 8 (`wait: :polynomially_longer`; `:exponentially_longer` was removed upstream).
+- The engine's ActionCable auto-configuration crashed the cable server in host apps (`adapter=` is not a valid setting); it now sets the cable hash and defers to an existing `config/cable.yml`.
+- Default `supported_versions` is `["1.6"]` — the only version the gem implements; charge points can no longer be persisted with an unsupported protocol.
+
 ## [0.1.0] - YYYY-MM-DD
 
 ### Added
