@@ -14,7 +14,7 @@ Ocpp::Rails.setup do |config|
   config.ocpp_version = "1.6"
   
   # Supported OCPP versions
-  config.supported_versions = ["1.6", "2.0", "2.0.1", "2.1"]
+  config.supported_versions = ["1.6"]
   
   # Heartbeat interval (seconds)
   config.heartbeat_interval = 300
@@ -32,7 +32,7 @@ end
 - **Type**: String
 - **Default**: `"1.6"`
 - **Description**: Default OCPP protocol version to use
-- **Valid Values**: `"1.6"`, `"2.0"`, `"2.0.1"`, `"2.1"`
+- **Valid Values**: `"1.6"` (2.x is not implemented yet)
 
 ```ruby
 config.ocpp_version = "1.6"
@@ -40,12 +40,12 @@ config.ocpp_version = "1.6"
 
 #### `supported_versions`
 - **Type**: Array of Strings
-- **Default**: `["1.6", "2.0", "2.0.1", "2.1"]`
+- **Default**: `["1.6"]`
 - **Description**: List of OCPP versions your system supports
 - **Note**: Charge points will validate against this list during boot
 
 ```ruby
-config.supported_versions = ["1.6", "2.0", "2.0.1"]
+config.supported_versions = ["1.6"]
 ```
 
 ### Connection Settings

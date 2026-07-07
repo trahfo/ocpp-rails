@@ -404,7 +404,7 @@ session.charge_point.messages.where(action: "MeterValues").recent.limit(10)
 # config/initializers/ocpp_rails.rb
 Ocpp::Rails.setup do |config|
   # Add the charge point's version
-  config.supported_versions = ["1.6", "2.0", "2.0.1"]
+  config.supported_versions = ["1.6"]
 end
 
 # Restart server

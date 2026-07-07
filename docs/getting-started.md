@@ -128,7 +128,7 @@ Ocpp::Rails.setup do |config|
   config.ocpp_version = "1.6"
   
   # List of supported OCPP versions
-  config.supported_versions = ["1.6", "2.0", "2.0.1", "2.1"]
+  config.supported_versions = ["1.6"]
   
   # Heartbeat interval in seconds (how often charge points send heartbeats)
   config.heartbeat_interval = 300  # 5 minutes

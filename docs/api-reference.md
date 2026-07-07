@@ -657,7 +657,7 @@ Configure OCPP Rails settings.
 # config/initializers/ocpp_rails.rb
 Ocpp::Rails.setup do |config|
   config.ocpp_version = "1.6"
-  config.supported_versions = ["1.6", "2.0", "2.0.1", "2.1"]
+  config.supported_versions = ["1.6"]
   config.heartbeat_interval = 300
   config.connection_timeout = 30
 end
@@ -681,7 +681,7 @@ Returns array of supported OCPP versions.
 
 ```ruby
 Ocpp::Rails.supported_versions
-# => ["1.6", "2.0", "2.0.1", "2.1"]
+# => ["1.6"]
 ```
 
 ---
