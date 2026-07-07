@@ -22,17 +22,32 @@ module Ocpp
             }
           end
 
+          # A duplicate/replayed StartTransaction must not open a second
+          # concurrent session on the connector; resume the open one instead.
+          existing = active_session
+          if existing
+            ::Rails.logger.warn("[OCPP] StartTransaction from #{@charge_point.identifier}: Connector #{@payload['connectorId']} already has active transaction #{existing.transaction_id}, resuming it")
+            return accepted_response(existing, authorization)
+          end
+
           started_at = TimestampParser.parse(@payload['timestamp'])
 
-          # Create new charging session
-          session = @charge_point.charging_sessions.create!(
-            connector_id: @payload['connectorId'],
-            id_tag: id_tag,
-            start_meter_value: @payload['meterStart'],
-            started_at: started_at.time,
-            status: 'Charging',
-            metadata: session_metadata(started_at)
-          )
+          begin
+            session = @charge_point.charging_sessions.create!(
+              connector_id: @payload['connectorId'],
+              id_tag: id_tag,
+              start_meter_value: @payload['meterStart'],
+              started_at: started_at.time,
+              status: 'Charging',
+              metadata: session_metadata(started_at)
+            )
+          rescue ActiveRecord::RecordNotUnique
+            # Lost a race against a concurrent StartTransaction; the winner's
+            # session is the one to resume.
+            session = active_session
+            raise unless session
+            return accepted_response(session, authorization)
+          end
 
           ::Rails.logger.info("[OCPP] StartTransaction from #{@charge_point.identifier}: Connector #{@payload['connectorId']}, Transaction ID: #{session.transaction_id}")
 
@@ -42,6 +57,16 @@ module Ocpp
           # Broadcast session started event for real-time UI updates
           broadcast_session_started(session)
 
+          accepted_response(session, authorization)
+        end
+
+        private
+
+        def active_session
+          @charge_point.charging_sessions.active.find_by(connector_id: @payload['connectorId'])
+        end
+
+        def accepted_response(session, authorization)
           id_tag_info = { 'status' => 'Accepted' }
           id_tag_info['expiryDate'] = authorization[:expiry_date].iso8601 if authorization[:expiry_date].present?
 
@@ -50,8 +75,6 @@ module Ocpp
             'transactionId' => session.transaction_id
           }
         end
-
-        private
 
         # Same decision the AuthorizeHandler makes, persisted for audit.
         def authorize(id_tag)

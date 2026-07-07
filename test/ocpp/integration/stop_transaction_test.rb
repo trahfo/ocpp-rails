@@ -418,9 +418,10 @@ module Ocpp
       end
 
       test "multiple stop transactions for different sessions" do
+        # connector 1 is taken by @session from setup
         session1 = create_charging_session(
           @charge_point,
-          connector_id: 1,
+          connector_id: 2,
           id_tag: "TAG_001",
           status: "Charging",
           started_at: 1.hour.ago,
@@ -429,7 +430,7 @@ module Ocpp
 
         session2 = create_charging_session(
           @charge_point,
-          connector_id: 2,
+          connector_id: 3,
           id_tag: "TAG_002",
           status: "Charging",
           started_at: 1.hour.ago,

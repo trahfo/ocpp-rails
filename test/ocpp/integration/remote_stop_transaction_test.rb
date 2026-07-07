@@ -259,16 +259,17 @@ module Ocpp
       end
 
       test "remote stop transaction for multiple sessions" do
+        # connector 1 is taken by @session from setup
         session1 = create_charging_session(
           @charge_point,
-          connector_id: 1,
+          connector_id: 2,
           id_tag: "TAG_001",
           status: "Charging"
         )
 
         session2 = create_charging_session(
           @charge_point,
-          connector_id: 2,
+          connector_id: 3,
           id_tag: "TAG_002",
           status: "Charging"
         )
@@ -456,16 +457,17 @@ module Ocpp
       end
 
       test "remote stop transaction for charge point with multiple connectors" do
+        # connector 1 is taken by @session from setup
         session1 = create_charging_session(
           @charge_point,
-          connector_id: 1,
+          connector_id: 2,
           id_tag: "TAG_001",
           status: "Charging"
         )
 
         session2 = create_charging_session(
           @charge_point,
-          connector_id: 2,
+          connector_id: 3,
           id_tag: "TAG_002",
           status: "Charging"
         )
