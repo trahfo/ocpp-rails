@@ -63,7 +63,7 @@ module Ocpp
         )
 
         assert request[:transactionId].present?
-        assert_kind_of String, request[:transactionId]
+        assert_kind_of Integer, request[:transactionId]
       end
 
       test "stop transaction requires meter stop value" do

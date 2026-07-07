@@ -259,7 +259,7 @@ end
 
 def remote_stop
   session = @charge_point.current_session
-  RemoteStopTransactionJob.perform_later(@charge_point.id, session.id) if session
+  RemoteStopTransactionJob.perform_later(@charge_point.id, session.transaction_id) if session
   redirect_to @charge_point, notice: "Remote stop command sent."
 end
 ```
@@ -269,7 +269,7 @@ end
 ```ruby
 def stop
   if @session.active?
-    RemoteStopTransactionJob.perform_later(@session.charge_point_id, @session.id)
+    RemoteStopTransactionJob.perform_later(@session.charge_point_id, @session.transaction_id)
     redirect_to @session, notice: "Stop command sent."
   else
     redirect_to @session, alert: "Session is already stopped."

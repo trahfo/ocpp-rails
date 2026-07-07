@@ -52,7 +52,7 @@ module Ocpp
         )
 
         assert request[:transactionId].present?
-        assert_kind_of String, request[:transactionId]
+        assert_kind_of Integer, request[:transactionId]
       end
 
       test "remote stop transaction response accepted" do
@@ -451,7 +451,7 @@ module Ocpp
           transaction_id: @session.transaction_id
         )
 
-        assert_kind_of String, request[:transactionId]
+        assert_kind_of Integer, request[:transactionId]
         assert request[:transactionId].present?
       end
 

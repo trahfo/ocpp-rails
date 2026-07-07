@@ -14,7 +14,7 @@ module Ocpp
 
           # Find active session if transaction ID provided
           session = if transaction_id
-            @charge_point.charging_sessions.find_by(id: transaction_id)
+            @charge_point.charging_sessions.find_by(transaction_id: transaction_id)
           else
             @charge_point.charging_sessions.active.find_by(connector_id: connector_id)
           end

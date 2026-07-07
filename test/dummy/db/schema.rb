@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_07_000000) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_07_000001) do
   create_table "ocpp_authorizations", force: :cascade do |t|
     t.integer "charge_point_id", null: false
     t.string "id_tag", null: false
@@ -46,7 +46,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_07_000000) do
   create_table "ocpp_charging_sessions", force: :cascade do |t|
     t.integer "charge_point_id", null: false
     t.integer "connector_id", null: false
-    t.string "transaction_id"
     t.string "id_tag"
     t.string "status", default: "Preparing"
     t.datetime "started_at"
@@ -59,6 +58,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_07_000000) do
     t.json "metadata", default: {}
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "transaction_id"
     t.index ["charge_point_id", "connector_id"], name: "idx_on_charge_point_id_connector_id_097b46847b"
     t.index ["charge_point_id"], name: "index_ocpp_charging_sessions_on_charge_point_id"
     t.index ["transaction_id"], name: "index_ocpp_charging_sessions_on_transaction_id", unique: true

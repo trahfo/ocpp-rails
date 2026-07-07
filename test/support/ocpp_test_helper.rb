@@ -21,7 +21,6 @@ module OcppTestHelper
   def create_charging_session(charge_point, attributes = {})
     defaults = {
       connector_id: 1,
-      transaction_id: SecureRandom.uuid,
       id_tag: "RFID#{SecureRandom.hex(4)}",
       status: "Preparing",
       started_at: Time.current,
@@ -124,7 +123,7 @@ module OcppTestHelper
   # Builds a StopTransaction request
   def build_stop_transaction_request(transaction_id:, meter_stop:, reason: "Local")
     {
-      transactionId: transaction_id.to_s,
+      transactionId: transaction_id.to_i,
       meterStop: meter_stop,
       timestamp: Time.current.iso8601,
       reason: reason
@@ -200,7 +199,7 @@ module OcppTestHelper
 
   # Builds a RemoteStopTransaction request
   def build_remote_stop_transaction_request(transaction_id:)
-    { transactionId: transaction_id.to_s }
+    { transactionId: transaction_id.to_i }
   end
 
   # Builds a ChangeConfiguration request

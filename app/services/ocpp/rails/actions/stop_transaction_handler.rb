@@ -9,8 +9,8 @@ module Ocpp
         end
 
         def call
-          # Find the session by transaction ID
-          session = @charge_point.charging_sessions.find_by(id: @payload['transactionId'])
+          # Find the session by the wire transaction ID
+          session = @charge_point.charging_sessions.find_by(transaction_id: @payload['transactionId'])
 
           unless session
             ::Rails.logger.error("[OCPP] StopTransaction: Session not found for transaction ID #{@payload['transactionId']}")
@@ -27,7 +27,7 @@ module Ocpp
             meter_value: @payload['meterStop']
           )
 
-          ::Rails.logger.info("[OCPP] StopTransaction from #{@charge_point.identifier}: Transaction ID #{session.id}, Energy: #{session.energy_consumed} Wh")
+          ::Rails.logger.info("[OCPP] StopTransaction from #{@charge_point.identifier}: Transaction ID #{session.transaction_id}, Energy: #{session.energy_consumed} Wh")
 
           # Process transaction data (meter values during charging) if provided
           if @payload['transactionData']

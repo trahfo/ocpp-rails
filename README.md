@@ -181,7 +181,7 @@ Ocpp::Rails::RemoteStartTransactionJob.perform_later(
 session = charge_point.current_session
 Ocpp::Rails::RemoteStopTransactionJob.perform_later(
   charge_point.id,
-  session.id
+  session.transaction_id
 )
 ```
 

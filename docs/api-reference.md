@@ -631,7 +631,7 @@ Sends remote stop transaction command via ActionCable.
 ```ruby
 Ocpp::Rails::RemoteStopTransactionJob.perform_later(
   charge_point_id,  # Integer
-  transaction_id    # String
+  transaction_id    # Integer (the OCPP transactionId, i.e. session.transaction_id)
 )
 ```
 
@@ -639,10 +639,10 @@ Ocpp::Rails::RemoteStopTransactionJob.perform_later(
 
 ```ruby
 # Immediate execution
-Ocpp::Rails::RemoteStopTransactionJob.perform_now(1, "tx_123")
+Ocpp::Rails::RemoteStopTransactionJob.perform_now(1, session.transaction_id)
 
 # Delayed execution
-Ocpp::Rails::RemoteStopTransactionJob.perform_later(1, "tx_123")
+Ocpp::Rails::RemoteStopTransactionJob.perform_later(1, session.transaction_id)
 ```
 
 ---

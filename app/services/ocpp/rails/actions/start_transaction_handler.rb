@@ -21,7 +21,7 @@ module Ocpp
             metadata: session_metadata(started_at)
           )
 
-          ::Rails.logger.info("[OCPP] StartTransaction from #{@charge_point.identifier}: Connector #{@payload['connectorId']}, Transaction ID: #{session.id}")
+          ::Rails.logger.info("[OCPP] StartTransaction from #{@charge_point.identifier}: Connector #{@payload['connectorId']}, Transaction ID: #{session.transaction_id}")
 
           # Update charge point status
           @charge_point.update(status: 'Charging')
@@ -34,7 +34,7 @@ module Ocpp
             'idTagInfo' => {
               'status' => 'Accepted'
             },
-            'transactionId' => session.id
+            'transactionId' => session.transaction_id
           }
         end
 

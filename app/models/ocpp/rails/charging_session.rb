@@ -40,10 +40,20 @@ module Ocpp
         stop_val - start_meter_value
       end
 
+      # OCPP 1.6 transactionId is a signed 32-bit integer
+      MAX_TRANSACTION_ID = (2**31) - 1
+
+      def self.generate_wire_transaction_id
+        loop do
+          candidate = SecureRandom.random_number(MAX_TRANSACTION_ID) + 1
+          break candidate unless exists?(transaction_id: candidate)
+        end
+      end
+
       private
 
       def generate_transaction_id
-        self.transaction_id ||= SecureRandom.uuid
+        self.transaction_id ||= self.class.generate_wire_transaction_id
       end
     end
   end

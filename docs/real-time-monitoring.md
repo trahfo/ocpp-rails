@@ -726,7 +726,7 @@ session = charge_point.current_session
 if session
   Ocpp::Rails::RemoteStopTransactionJob.perform_later(
     charge_point.id,
-    session.id
+    session.transaction_id
   )
 end
 ```
@@ -763,7 +763,7 @@ module Api
 
       Ocpp::Rails::RemoteStopTransactionJob.perform_later(
         @charge_point.id,
-        session.id
+        session.transaction_id
       )
 
       render json: { message: 'Remote stop command sent' }, status: :accepted
