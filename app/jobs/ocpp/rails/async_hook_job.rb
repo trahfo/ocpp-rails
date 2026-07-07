@@ -3,7 +3,7 @@ module Ocpp
     class AsyncHookJob < ApplicationJob
       queue_as :ocpp_hooks
 
-      retry_on StandardError, wait: :exponentially_longer, attempts: 3
+      retry_on StandardError, wait: :polynomially_longer, attempts: 3
 
       def perform(state_change_id, hook_class_name)
         state_change = Ocpp::Rails::StateChange.find_by(id: state_change_id)
