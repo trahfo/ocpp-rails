@@ -89,6 +89,28 @@ config.connection_timeout = 30
 config.implausible_energy_jump_wh = 100_000
 ```
 
+### Rate Limiting
+
+Both limits use fixed 60-second windows keyed by station identifier and are
+kept **per process** — in multi-server deployments every node applies them
+independently, so size the values per node. Set either to `nil` to disable.
+
+#### `max_messages_per_minute`
+- **Type**: Integer or `nil`
+- **Default**: `300`
+- **Description**: Maximum inbound OCPP messages per station per minute. Messages beyond the limit are dropped before any processing or audit-row write and logged as `[OCPP][security]` warnings, so a chatty or malicious station cannot grow the database unboundedly.
+
+#### `max_connection_attempts_per_minute`
+- **Type**: Integer or `nil`
+- **Default**: `12`
+- **Description**: Maximum channel subscription attempts per station identifier per minute; attempts beyond it are rejected before authentication.
+
+**Mass reconnects**: when a deploy or network blip drops the whole fleet,
+every station reconnects at once. Configure stations (or your proxy) to
+retry with exponential backoff and jitter; the connection limit above
+protects each identifier, not the aggregate. If your fleet legitimately
+reconnects faster than 12 attempts/minute per station, raise the limit.
+
 ## Environment-Specific Configuration
 
 ### Development

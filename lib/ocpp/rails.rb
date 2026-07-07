@@ -19,11 +19,25 @@ module Ocpp
       configuration.supported_versions
     end
 
+    def self.message_rate_limiter
+      @message_rate_limiter ||= RateLimiter.new { configuration.max_messages_per_minute }
+    end
+
+    def self.connection_rate_limiter
+      @connection_rate_limiter ||= RateLimiter.new { configuration.max_connection_attempts_per_minute }
+    end
+
+    def self.reset_rate_limiters!
+      @message_rate_limiter&.reset!
+      @connection_rate_limiter&.reset!
+    end
+
     class Configuration
       attr_accessor :ocpp_version, :supported_versions, :heartbeat_interval, :connection_timeout,
                     :state_change_hooks, :state_change_retention_days, :state_change_cleanup_enabled,
                     :authorization_hooks, :authorization_retention_days, :authorization_cleanup_enabled,
-                    :implausible_energy_jump_wh, :authentication_mode
+                    :implausible_energy_jump_wh, :authentication_mode,
+                    :max_messages_per_minute, :max_connection_attempts_per_minute
 
       def initialize
         @ocpp_version = "1.6"
@@ -44,6 +58,10 @@ module Ocpp
         # :none accepts any client that knows a station identifier - only
         # for closed networks or during migration.
         @authentication_mode = :basic
+        # Per-station ingress limits (fixed 60s windows, per process);
+        # nil disables the respective check.
+        @max_messages_per_minute = 300
+        @max_connection_attempts_per_minute = 12
       end
 
       def register_state_change_hook(hook)

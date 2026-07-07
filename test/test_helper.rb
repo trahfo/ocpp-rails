@@ -6,6 +6,13 @@ ActiveRecord::Migrator.migrations_paths = [ File.expand_path("../test/dummy/db/m
 ActiveRecord::Migrator.migrations_paths << File.expand_path("../db/migrate", __dir__)
 require "rails/test_help"
 
+# Rate limiter windows are process-global; isolate tests from each other
+module ActiveSupport
+  class TestCase
+    setup { Ocpp::Rails.reset_rate_limiters! }
+  end
+end
+
 # Load fixtures from the engine
 if ActiveSupport::TestCase.respond_to?(:fixture_paths=)
   ActiveSupport::TestCase.fixture_paths = [ File.expand_path("fixtures", __dir__) ]

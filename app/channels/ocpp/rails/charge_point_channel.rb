@@ -6,6 +6,13 @@ module Ocpp
       # (OCPP-J Security Profile 1).
       def subscribed
         charge_point_id = params[:charge_point_id]
+
+        unless Ocpp::Rails.connection_rate_limiter.allow?(charge_point_id.to_s)
+          reject
+          logger.warn "[OCPP][security] ChargePoint #{charge_point_id} subscription rejected: connection rate limit exceeded"
+          return
+        end
+
         result = StationAuthenticator.authenticate(
           identifier: charge_point_id,
           authorization_header: authorization_header
@@ -41,6 +48,13 @@ module Ocpp
       # Receive OCPP messages from charge point
       def receive(data)
         return unless @charge_point
+
+        # Drop before any processing or Message-row write, so a chatty or
+        # malicious station cannot grow the database unboundedly.
+        unless Ocpp::Rails.message_rate_limiter.allow?(@charge_point.identifier)
+          logger.warn "[OCPP][security] ChargePoint #{@charge_point.identifier}: message rate limit exceeded, dropping message"
+          return
+        end
 
         message = data["message"]
         MessageHandler.new(@charge_point, message).process
