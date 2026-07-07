@@ -26,12 +26,24 @@ module Ocpp
           send_callerror(SecureRandom.uuid, "ProtocolError", "Unknown message type")
         end
       rescue => e
-        log_error("Error processing message: #{e.message}")
-        log_error(e.backtrace.join("\n"))
-        send_callerror(parsed[:message_id] || SecureRandom.uuid, "InternalError", e.message) if parsed
+        send_internal_error(parsed && parsed[:message_id], e, "Error processing message")
       end
 
       private
+
+      # Never place exception details in the CALLERROR sent to the station;
+      # log them server-side under a reference the station response carries.
+      def send_internal_error(message_id, exception, context)
+        error_ref = SecureRandom.hex(8)
+        log_error("#{context} (ref #{error_ref}): #{exception.class}: #{exception.message}")
+        log_error(exception.backtrace.join("\n")) if exception.backtrace
+        send_callerror(
+          message_id || SecureRandom.uuid,
+          "InternalError",
+          "An internal error occurred",
+          { "errorRef" => error_ref }
+        )
+      end
 
       def handle_call(parsed)
         # Log incoming message
@@ -51,8 +63,7 @@ module Ocpp
         response = handler.call
         send_callresult(parsed[:message_id], response)
       rescue => e
-        log_error("Error in #{parsed[:action]} handler: #{e.message}")
-        send_callerror(parsed[:message_id], "InternalError", e.message)
+        send_internal_error(parsed[:message_id], e, "Error in #{parsed[:action]} handler")
       end
 
       def handle_callresult(parsed)
