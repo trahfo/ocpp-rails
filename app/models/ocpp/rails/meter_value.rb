@@ -13,6 +13,12 @@ module Ocpp
       scope :current, -> { where(measurand: "Current.Import") }
       scope :voltage, -> { where(measurand: "Voltage") }
       scope :recent, -> { order(timestamp: :desc) }
+      scope :flagged, -> { where(flagged: true) }
+
+      def value_in_wh
+        return nil if value.nil?
+        unit == "kWh" ? value * 1000 : value
+      end
     end
   end
 end

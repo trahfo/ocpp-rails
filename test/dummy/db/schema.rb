@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_07_000002) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_07_000003) do
   create_table "ocpp_authorizations", force: :cascade do |t|
     t.integer "charge_point_id", null: false
     t.string "id_tag", null: false
@@ -97,6 +97,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_07_000002) do
     t.datetime "updated_at", null: false
     t.string "raw_timestamp"
     t.string "timestamp_source", default: "station", null: false
+    t.boolean "flagged", default: false, null: false
+    t.string "flag_reason"
     t.index ["charge_point_id"], name: "index_ocpp_meter_values_on_charge_point_id"
     t.index ["charging_session_id"], name: "index_ocpp_meter_values_on_charging_session_id"
     t.index ["measurand"], name: "index_ocpp_meter_values_on_measurand"

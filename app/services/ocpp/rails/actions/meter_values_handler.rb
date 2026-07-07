@@ -40,19 +40,34 @@ module Ocpp
         private
 
         def create_meter_value(session, connector_id, timestamp, sampled_value)
+          measurand = sampled_value['measurand'] || 'Energy.Active.Import.Register'
+          unit = sampled_value['unit'] || 'Wh'
+
+          flag_reason = MeterAnomalyDetector.check(
+            session: session,
+            measurand: measurand,
+            value: sampled_value['value'],
+            unit: unit
+          )
+          if flag_reason
+            ::Rails.logger.warn("[OCPP] Anomalous meter value from #{@charge_point.identifier} (#{flag_reason}): #{sampled_value['value']} #{unit}")
+          end
+
           @charge_point.meter_values.create!(
             charging_session: session,
             connector_id: connector_id,
-            measurand: sampled_value['measurand'] || 'Energy.Active.Import.Register',
+            measurand: measurand,
             phase: sampled_value['phase'],
-            unit: sampled_value['unit'] || 'Wh',
+            unit: unit,
             context: sampled_value['context'] || 'Sample.Periodic',
             format: sampled_value['format'] || 'Raw',
             location: sampled_value['location'] || 'Outlet',
             value: sampled_value['value'],
             timestamp: timestamp.time,
             raw_timestamp: timestamp.raw,
-            timestamp_source: timestamp.source
+            timestamp_source: timestamp.source,
+            flagged: flag_reason.present?,
+            flag_reason: flag_reason
           )
         rescue => e
           ::Rails.logger.error("[OCPP] Failed to create meter value: #{e.message}")

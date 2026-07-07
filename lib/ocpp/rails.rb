@@ -22,7 +22,8 @@ module Ocpp
     class Configuration
       attr_accessor :ocpp_version, :supported_versions, :heartbeat_interval, :connection_timeout,
                     :state_change_hooks, :state_change_retention_days, :state_change_cleanup_enabled,
-                    :authorization_hooks, :authorization_retention_days, :authorization_cleanup_enabled
+                    :authorization_hooks, :authorization_retention_days, :authorization_cleanup_enabled,
+                    :implausible_energy_jump_wh
 
       def initialize
         @ocpp_version = "1.6"
@@ -36,6 +37,9 @@ module Ocpp
         @state_change_cleanup_enabled = true
         @authorization_retention_days = 30
         @authorization_cleanup_enabled = true
+        # Max plausible energy register increase between samples, in Wh;
+        # readings jumping further are flagged. nil disables the check.
+        @implausible_energy_jump_wh = 1_000_000
       end
 
       def register_state_change_hook(hook)

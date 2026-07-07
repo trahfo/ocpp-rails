@@ -19,13 +19,22 @@ module Ocpp
       end
 
       def stop!(reason: "Local", meter_value: nil)
+        energy = calculate_energy_consumed(meter_value)
+        new_metadata = metadata || {}
+
+        if energy.nil?
+          ::Rails.logger.warn("[OCPP] Session #{transaction_id}: stop meter value below meterStart (rollover or meter swap?); flagging instead of recording negative energy")
+          new_metadata = new_metadata.merge("energy_anomaly" => "stop_below_start")
+        end
+
         update(
           stopped_at: Time.current,
           stop_meter_value: meter_value,
           stop_reason: reason,
           duration_seconds: calculate_duration,
-          energy_consumed: calculate_energy_consumed(meter_value),
-          status: "Completed"
+          energy_consumed: energy,
+          status: "Completed",
+          metadata: new_metadata
         )
       end
 
@@ -34,9 +43,12 @@ module Ocpp
         ((stopped_at || Time.current) - started_at).to_i
       end
 
+      # Returns nil (never a negative number) when the stop value is below
+      # meterStart, e.g. after a register rollover or meter swap.
       def calculate_energy_consumed(stop_value = nil)
         return 0 unless start_meter_value
         stop_val = stop_value || stop_meter_value || start_meter_value
+        return nil if stop_val < start_meter_value
         stop_val - start_meter_value
       end
 

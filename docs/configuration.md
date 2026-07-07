@@ -77,6 +77,18 @@ config.heartbeat_interval = 300  # 5 minutes
 config.connection_timeout = 30
 ```
 
+### Metering Settings
+
+#### `implausible_energy_jump_wh`
+- **Type**: Integer or `nil`
+- **Default**: `1_000_000` (1 MWh)
+- **Unit**: Wh
+- **Description**: Maximum plausible increase of the Energy.Active.Import.Register between samples of one session. Readings that jump further (or decrease) are stored with `flagged: true` and a `flag_reason` instead of silently entering energy accounting. Set to `nil` to disable the jump check (decreases are always flagged).
+
+```ruby
+config.implausible_energy_jump_wh = 100_000
+```
+
 ## Environment-Specific Configuration
 
 ### Development
