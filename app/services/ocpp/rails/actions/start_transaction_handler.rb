@@ -9,13 +9,16 @@ module Ocpp
         end
 
         def call
+          started_at = TimestampParser.parse(@payload['timestamp'])
+
           # Create new charging session
           session = @charge_point.charging_sessions.create!(
             connector_id: @payload['connectorId'],
             id_tag: @payload['idTag'],
             start_meter_value: @payload['meterStart'],
-            started_at: parse_timestamp(@payload['timestamp']),
-            status: 'Charging'
+            started_at: started_at.time,
+            status: 'Charging',
+            metadata: session_metadata(started_at)
           )
 
           ::Rails.logger.info("[OCPP] StartTransaction from #{@charge_point.identifier}: Connector #{@payload['connectorId']}, Transaction ID: #{session.id}")
@@ -37,10 +40,13 @@ module Ocpp
 
         private
 
-        def parse_timestamp(timestamp_string)
-          Time.parse(timestamp_string)
-        rescue ArgumentError, TypeError
-          Time.current
+        def session_metadata(started_at)
+          return {} unless started_at.server_fallback?
+
+          {
+            'started_at_source' => started_at.source,
+            'raw_start_timestamp' => started_at.raw
+          }
         end
 
         def broadcast_session_started(session)

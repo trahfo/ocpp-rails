@@ -22,7 +22,7 @@ module Ocpp
           # Process each meter value set
           meter_value_sets = @payload['meterValue'] || []
           meter_value_sets.each do |meter_value_set|
-            timestamp = parse_timestamp(meter_value_set['timestamp'])
+            timestamp = TimestampParser.parse(meter_value_set['timestamp'])
 
             sampled_values = meter_value_set['sampledValue'] || []
             sampled_values.each do |sampled_value|
@@ -50,17 +50,13 @@ module Ocpp
             format: sampled_value['format'] || 'Raw',
             location: sampled_value['location'] || 'Outlet',
             value: sampled_value['value'],
-            timestamp: timestamp
+            timestamp: timestamp.time,
+            raw_timestamp: timestamp.raw,
+            timestamp_source: timestamp.source
           )
         rescue => e
           ::Rails.logger.error("[OCPP] Failed to create meter value: #{e.message}")
           nil
-        end
-
-        def parse_timestamp(timestamp_string)
-          Time.parse(timestamp_string)
-        rescue ArgumentError, TypeError
-          Time.current
         end
 
         def broadcast_meter_value(meter_value)

@@ -54,7 +54,7 @@ module Ocpp
 
         def process_transaction_data(session, transaction_data)
           transaction_data.each do |meter_values_set|
-            timestamp = parse_timestamp(meter_values_set['timestamp'])
+            timestamp = TimestampParser.parse(meter_values_set['timestamp'])
 
             sampled_values = meter_values_set['sampledValue'] || []
             sampled_values.each do |sampled_value|
@@ -76,14 +76,10 @@ module Ocpp
             format: sampled_value['format'] || 'Raw',
             location: sampled_value['location'] || 'Outlet',
             value: sampled_value['value'],
-            timestamp: timestamp
+            timestamp: timestamp.time,
+            raw_timestamp: timestamp.raw,
+            timestamp_source: timestamp.source
           )
-        end
-
-        def parse_timestamp(timestamp_string)
-          Time.parse(timestamp_string)
-        rescue ArgumentError, TypeError
-          Time.current
         end
 
         def broadcast_session_stopped(session)
