@@ -312,10 +312,8 @@ class Ocpp::Rails::RemoteStartTransactionJob < ApplicationJob
   private
 
   def send_to_charge_point(charge_point, message)
-    ActionCable.server.broadcast(
-      "charge_point_#{charge_point.id}_outbound",
-      { message: message }
-    )
+    # Broadcast on the stream the station socket subscribes to (stream_for)
+    ChargePointChannel.broadcast_to(charge_point, { message: message })
   end
 end
 ```

@@ -30,10 +30,9 @@ module Ocpp
       private
 
       def send_to_charge_point(charge_point, message)
-        ActionCable.server.broadcast(
-          "charge_point_#{charge_point.id}_outbound",
-          { message: message }
-        )
+        # stream_for in ChargePointChannel relays this straight down the
+        # station's WebSocket, the same path CALLRESULTs already use.
+        ChargePointChannel.broadcast_to(charge_point, { message: message })
       end
     end
   end
