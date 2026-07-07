@@ -1,7 +1,7 @@
 # OCPP Rails
 
 [![OCPP](https://img.shields.io/badge/OCPP-1.6-blue)]()
-[![OCTT CS coverage](https://img.shields.io/badge/OCTT%20Central%20System-24%2F76%20cases-orange)](docs/octt-test-plan.md)
+[![OCTT CS coverage](https://img.shields.io/badge/OCTT%20Central%20System-27%2F76%20cases-orange)](docs/octt-test-plan.md)
 [![Status](https://img.shields.io/badge/status-alpha-yellow)]()
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
@@ -25,7 +25,7 @@ OCPP message layer.
 - 📡 **WebSocket Communication** - ActionCable channel handles bidirectional OCPP messages
 - 🔌 **Protocol Handlers** - BootNotification, Authorize, Heartbeat, StartTransaction, StopTransaction, MeterValues, StatusNotification
 - 🗄️ **Data Models** - ChargePoint, ChargingSession, MeterValue, Message (audit log)
-- 🚀 **Remote Control Jobs** - RemoteStartTransaction, RemoteStopTransaction, UnlockConnector
+- 🚀 **Remote Control Jobs** - RemoteStartTransaction, RemoteStopTransaction, UnlockConnector, Reset, ClearCache
 - 📊 **Real-time Broadcasts** - ActionCable broadcasts for status, sessions, and meter values
 - 💾 **SQLite Compatible** - Works with async adapter, no Redis required for development
 
@@ -54,25 +54,25 @@ role `ocpp-rails` fills, so it is the right yardstick.
 
 | | Cases | What it means |
 |---|---:|---|
-| ✅ **Implemented + tested** | 24 | Works and guarded by a real handler/job-driven test |
+| ✅ **Implemented + tested** | 27 | Works and guarded by a real handler/job-driven test |
 | 🟡 **Implemented — needs test** | 0 | Behavior works, but only simulation-style tests exist; needs a real regression test |
-| 🔴 **Not implemented** | 50 | The message/operation does not exist in the engine yet |
+| 🔴 **Not implemented** | 47 | The message/operation does not exist in the engine yet |
 | ⚪ **Out of scope** | 2 | TLS handshake (TC_086/087) — belongs in your infra, not app code |
 
-So **24 of 76 OCTT Central-System cases (32%) are backed by working code**, and every
+So **27 of 76 OCTT Central-System cases (36%) are backed by working code**, and every
 one now has real automated (handler/job-driven) coverage — the 🟡 bucket is empty.
-Everything from Reset onward — Configuration, Local Auth List, Firmware, Diagnostics,
-Reservation, Remote Trigger, Smart Charging, DataTransfer and the Security profiles 2/3 —
-is **not built yet**. Treat this gem as a solid, well-tested Core-profile foundation to
-build on, not a certified CSMS.
+The rest — Configuration, Local Auth List, Firmware, Diagnostics, Reservation, Remote
+Trigger, Smart Charging, DataTransfer and the Security profiles 2/3 — is **not built
+yet**. Treat this gem as a solid, well-tested Core-profile foundation to build on, not a
+certified CSMS.
 
 **By feature area** (each links to the detailed Given/When/Then specs):
 
 | Area | Status | Notes |
 |---|---|---|
-| [Boot / Charging Sessions / Cache](docs/octt-test-plan.md#1-boot-charging-sessions-cache) | ✅ tested / 🔴 ClearCache | Core flow tested end-to-end; only ClearCache missing |
+| [Boot / Charging Sessions / Cache](docs/octt-test-plan.md#1-boot-charging-sessions-cache) | ✅ implemented + tested | Core flow **and** ClearCache tested end-to-end |
 | [Remote Start / Stop](docs/octt-test-plan.md#2-remote-start--stop) | ✅ implemented + tested | delivery **and** end-to-end session flow tested |
-| [Reset / Unlock / Configuration](docs/octt-test-plan.md#3-reset--unlock--configuration-core-profile) | 🟡 partial | UnlockConnector done + tested; Reset / Get·ChangeConfiguration still 🔴 |
+| [Reset / Unlock / Configuration](docs/octt-test-plan.md#3-reset--unlock--configuration-core-profile) | 🟡 partial | Reset + UnlockConnector done + tested; Get·ChangeConfiguration still 🔴 |
 | [Authorize non-happy paths](docs/octt-test-plan.md#4-authorize-non-happy-paths) | ✅ tested | Invalid / Expired / Blocked on Authorize.req tested |
 | [Offline / power-loss](docs/octt-test-plan.md#5-offline--power-loss-behavior) | ✅ tested | replay + power-loss recovery sequences tested |
 | [Local Authorization List](docs/octt-test-plan.md#6-local-authorization-list) | 🔴 not implemented | no SendLocalList / GetLocalListVersion |
@@ -349,14 +349,15 @@ a **handler/job-driven** test for it. See the [Testing Guide](docs/testing.md) f
 ### Implemented today
 - ✅ Core inbound session flow (Boot, Authorize, Heartbeat, Start/StopTransaction, MeterValues, StatusNotification)
 - ✅ Remote start/stop transactions (delivery + end-to-end flow) and UnlockConnector — releasable even during an active session
+- ✅ Device management: Reset (Hard/Soft) and ClearCache (authorization cache)
 - ✅ Real-time meter value / status / session broadcasts
 - ✅ Session management, energy/duration tracking, meter-anomaly + timestamp-provenance checks
 - ✅ OCPP-J Security Profile 1 (HTTP Basic Auth) + per-station rate limiting
 - ✅ Complete inbound/outbound message logging
-- ✅ Handler/job-driven OCTT regression suite for all 24 implemented Core-profile cases
+- ✅ Handler/job-driven OCTT regression suite for all 27 implemented Core-profile cases
 
 ### Not implemented yet (contributions very welcome — see the [test plan](docs/octt-test-plan.md))
-- 🔴 Reset, ClearCache, ChangeAvailability
+- 🔴 ChangeAvailability
 - 🔴 Configuration management (Get/ChangeConfiguration)
 - 🔴 Local Authorization List (SendLocalList, GetLocalListVersion)
 - 🔴 Firmware updates + FirmwareStatusNotification
@@ -384,9 +385,9 @@ self-contained, well-scoped PR. Good first issues:
 - **🟡 Add a real test** for something that already works — pick a 🟡 case (e.g. the
   Authorize non-happy paths, or the boot flow) and write a handler-driven test against
   the spec. No new production code needed.
-- **🔴 Implement one operation** — the remaining outbound Core commands (Reset,
-  Get/ChangeConfiguration, ClearCache) are the most self-contained; they follow the same
-  pattern as the existing `RemoteStartTransactionJob` / `UnlockConnectorJob`.
+- **🔴 Implement one operation** — the remaining outbound Core commands
+  (Get/ChangeConfiguration, ChangeAvailability) are the most self-contained; they follow the
+  same pattern as the existing `RemoteStartTransactionJob` / `UnlockConnectorJob` / `ResetJob`.
 - **🔴 Build out a feature profile** — Reservation, Smart Charging, Firmware, etc. are
   larger efforts; open an issue first so we can sketch the model/API together.
 

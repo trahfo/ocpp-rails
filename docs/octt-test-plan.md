@@ -40,12 +40,12 @@ _Last updated: 2026-07-07. Measured against OCTT (2025-02) Section 3 (SUT = Cent
 
 | | Cases | Meaning |
 |---|---:|---|
-| ✅ Implemented + tested | 24 | Works **and** guarded by a real handler/job-driven test |
+| ✅ Implemented + tested | 27 | Works **and** guarded by a real handler/job-driven test |
 | 🟡 Implemented — needs test | 0 | Behavior works, only simulation-style coverage |
-| 🔴 Not implemented | 50 | Message/operation not in the engine yet |
+| 🔴 Not implemented | 47 | Message/operation not in the engine yet |
 | ⚪ Out of scope | 2 | TLS handshake (TC_086/087) — infra, not app code |
 
-**24 of 76 cases (32%) are backed by working code — and every one now has a real regression test** (the 🟡 bucket is empty). The remaining 50 span Reset, ClearCache, Configuration, Local Auth List, Firmware, Diagnostics, Reservation, Remote Trigger, Smart Charging, DataTransfer and Security profiles 2/3.
+**27 of 76 cases (36%) are backed by working code — and every one now has a real regression test** (the 🟡 bucket is empty). The remaining 47 span Configuration, Local Auth List, Firmware, Diagnostics, Reservation, Remote Trigger, Smart Charging, DataTransfer and Security profiles 2/3.
 
 > The index below covers the **74 cases specified in this document**; the other 2 of the 76 OCTT Section-3 cases are not yet written up here and count as 🔴 Not implemented.
 
@@ -60,7 +60,7 @@ _Last updated: 2026-07-07. Measured against OCTT (2025-02) Section 3 (SUT = Cent
 | TC_004_2 | Identification First – ConnectionTimeOut | ✅ | `status_notification_handler_test.rb` |
 | TC_005_1 | EV Side Disconnected | ✅ | `stop_transaction_reason_test.rb` |
 | TC_007 | Regular Start – Cached Id | ✅ | `start_transaction_authorization_test.rb` |
-| TC_061 | Clear Authorization Data in Cache | 🔴 | no ClearCache operation |
+| TC_061 | Clear Authorization Data in Cache | ✅ | `clear_cache_job_test.rb` |
 | **[2. Remote Start / Stop](#2-remote-start--stop)** | | | |
 | TC_010 | Remote Start – Cable Plugged in First | ✅ | `integration/remote_start_flow_test.rb` |
 | TC_011_1 | Remote Start – Remote Start First | ✅ | `integration/remote_start_flow_test.rb` |
@@ -69,8 +69,8 @@ _Last updated: 2026-07-07. Measured against OCTT (2025-02) Section 3 (SUT = Cent
 | TC_026 | Remote Start – Rejected | ✅ | `outbound_delivery_test.rb` |
 | TC_028 | Remote Stop – Rejected | ✅ | `outbound_delivery_test.rb` |
 | **[3. Reset / Unlock / Configuration](#3-reset--unlock--configuration-core-profile)** | | | |
-| TC_013 | Hard Reset | 🔴 | no Reset operation |
-| TC_014 | Soft Reset | 🔴 | no Reset operation |
+| TC_013 | Hard Reset | ✅ | `reset_job_test.rb` |
+| TC_014 | Soft Reset | ✅ | `reset_job_test.rb` |
 | TC_017_1 | Unlock Connector – no session | ✅ | `unlock_connector_job_test.rb` |
 | TC_017_2 | Unlock Connector – no session (NotSupported) | ✅ | `unlock_connector_job_test.rb` |
 | TC_018_1 | Unlock Connector – with active session | ✅ | `unlock_connector_job_test.rb` |
@@ -264,8 +264,8 @@ Feature: StartTransaction with a cached authorization, no Authorize.req sent
 ```
 
 ### TC_061_CSMS — Clear Authorization Data in Authorization Cache
-**Ref:** 3.3.2 · **Status:** 🔴 Not implemented
-**Gap:** No outbound `ClearCache` operation exists (only RemoteStartTransaction/RemoteStopTransaction jobs are implemented).
+**Ref:** 3.3.2 · **Status:** ✅ Implemented + tested
+**Implemented:** `ClearCacheJob` (`app/jobs/ocpp/rails/clear_cache_job.rb`), covered by `test/ocpp/clear_cache_job_test.rb`.
 **Suggested file:** `test/ocpp/clear_cache_job_test.rb`
 
 ```gherkin
@@ -379,8 +379,8 @@ Feature: Central System handles a rejected remote stop
 ## 3. Reset / Unlock / Configuration (Core profile)
 
 ### TC_013_CSMS — Hard Reset
-**Ref:** 3.5.1 · **Status:** 🔴 Not implemented
-**Gap:** No outbound `Reset` operation.
+**Ref:** 3.5.1 · **Status:** ✅ Implemented + tested
+**Implemented:** `ResetJob` (`app/jobs/ocpp/rails/reset_job.rb`), covered by `test/ocpp/reset_job_test.rb`.
 **Suggested file:** `test/ocpp/reset_job_test.rb`
 
 ```gherkin
@@ -398,7 +398,7 @@ Feature: Central System triggers a hard reset
 ```
 
 ### TC_014_CSMS — Soft Reset
-**Ref:** 3.5.2 · **Status:** 🔴 Not implemented
+**Ref:** 3.5.2 · **Status:** ✅ Implemented + tested
 **Suggested file:** `test/ocpp/reset_job_test.rb`
 
 ```gherkin

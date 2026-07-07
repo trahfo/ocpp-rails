@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-07-07
+
+### Added
+- **Reset** outbound operation (`ResetJob`) — Hard and Soft resets (OCTT TC_013 / TC_014); the station re-registers through the existing BootNotification/StatusNotification handlers afterward.
+- **ClearCache** outbound operation (`ClearCacheJob`) — clears the charge point's authorization cache (OCTT TC_061).
+- Handler/job-driven tests for Reset and ClearCache, raising OCTT Central-System coverage to **27 of 76** cases.
+
 ## [0.2.0] - 2026-07-07
 
 ### Added
@@ -84,5 +91,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Database Support:** PostgreSQL, MySQL, SQLite
 - **WebSocket Protocol:** RFC 6455 via ActionCable
 
+[0.2.1]: https://github.com/trahfo/ocpp-rails/releases/tag/v0.2.1
 [0.2.0]: https://github.com/trahfo/ocpp-rails/releases/tag/v0.2.0
 [0.1.0]: https://github.com/trahfo/ocpp-rails/releases/tag/v0.1.0
