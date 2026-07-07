@@ -55,7 +55,10 @@ module Ocpp
       include OcppTestHelper
 
       test "station subscription streams for its charge point record" do
-        charge_point = create_charge_point
+        charge_point = create_charge_point(auth_password: "station-secret")
+        stub_connection(request: ActionDispatch::TestRequest.create(
+          "HTTP_AUTHORIZATION" => "Basic #{Base64.strict_encode64("#{charge_point.identifier}:station-secret")}"
+        ))
 
         subscribe charge_point_id: charge_point.identifier
 

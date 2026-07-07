@@ -23,7 +23,7 @@ module Ocpp
       attr_accessor :ocpp_version, :supported_versions, :heartbeat_interval, :connection_timeout,
                     :state_change_hooks, :state_change_retention_days, :state_change_cleanup_enabled,
                     :authorization_hooks, :authorization_retention_days, :authorization_cleanup_enabled,
-                    :implausible_energy_jump_wh
+                    :implausible_energy_jump_wh, :authentication_mode
 
       def initialize
         @ocpp_version = "1.6"
@@ -40,6 +40,10 @@ module Ocpp
         # Max plausible energy register increase between samples, in Wh;
         # readings jumping further are flagged. nil disables the check.
         @implausible_energy_jump_wh = 1_000_000
+        # :basic (OCPP-J Security Profile 1, HTTP Basic Auth) or :none.
+        # :none accepts any client that knows a station identifier - only
+        # for closed networks or during migration.
+        @authentication_mode = :basic
       end
 
       def register_state_change_hook(hook)

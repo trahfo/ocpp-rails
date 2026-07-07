@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_07_000003) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_07_000004) do
   create_table "ocpp_authorizations", force: :cascade do |t|
     t.integer "charge_point_id", null: false
     t.string "id_tag", null: false
@@ -40,6 +40,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_07_000003) do
     t.json "metadata", default: {}
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "auth_password_digest"
     t.index ["identifier"], name: "index_ocpp_charge_points_on_identifier", unique: true
   end
 

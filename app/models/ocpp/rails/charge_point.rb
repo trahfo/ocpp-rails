@@ -16,6 +16,23 @@ module Ocpp
       scope :available, -> { where(status: "Available") }
       scope :charging, -> { where(status: "Charging") }
 
+      # Stores the station's Basic Auth password as a SHA-256 digest.
+      # OCPP-J passwords are high-entropy machine credentials (the spec
+      # mandates 16-40 random bytes), so a fast unsalted hash is appropriate,
+      # like for API tokens.
+      def auth_password=(password)
+        self.auth_password_digest = password.nil? ? nil : Digest::SHA256.hexdigest(password)
+      end
+
+      def authenticate_password?(password)
+        return false if auth_password_digest.blank? || password.blank?
+
+        ActiveSupport::SecurityUtils.fixed_length_secure_compare(
+          Digest::SHA256.hexdigest(password),
+          auth_password_digest
+        )
+      end
+
       def heartbeat!
         old_connected = connected
         update(last_heartbeat_at: Time.current, connected: true)

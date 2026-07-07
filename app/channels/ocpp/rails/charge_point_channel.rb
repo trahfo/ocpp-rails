@@ -1,23 +1,30 @@
 module Ocpp
   module Rails
     class ChargePointChannel < ActionCable::Channel::Base
-      # Charge point subscribes with their identifier
+      # Charge point subscribes with their identifier; the credential travels
+      # in the HTTP Basic Authorization header of the WebSocket upgrade
+      # (OCPP-J Security Profile 1).
       def subscribed
         charge_point_id = params[:charge_point_id]
-        @charge_point = ChargePoint.find_by(identifier: charge_point_id)
+        result = StationAuthenticator.authenticate(
+          identifier: charge_point_id,
+          authorization_header: authorization_header
+        )
 
-        if @charge_point
-          stream_for @charge_point
-          old_connected = @charge_point.connected
-          @charge_point.update(connected: true, last_heartbeat_at: Time.current)
-          logger.info "ChargePoint #{charge_point_id} connected"
-          
-          # Log connection state change if it actually changed
-          log_connection_change(old_connected, true, "subscribed")
-        else
+        unless result.success?
           reject
-          logger.warn "ChargePoint #{charge_point_id} not found, connection rejected"
+          logger.warn "[OCPP][security] ChargePoint #{charge_point_id} subscription rejected: #{result.failure}"
+          return
         end
+
+        @charge_point = result.charge_point
+        stream_for @charge_point
+        old_connected = @charge_point.connected
+        @charge_point.update(connected: true, last_heartbeat_at: Time.current)
+        logger.info "ChargePoint #{charge_point_id} connected"
+
+        # Log connection state change if it actually changed
+        log_connection_change(old_connected, true, "subscribed")
       end
 
       def unsubscribed
@@ -43,6 +50,14 @@ module Ocpp
       end
 
       private
+
+      # The connection's request is protected API; ConnectionStub in channel
+      # tests may not define it at all, and :none mode must keep working then.
+      def authorization_header
+        return nil unless connection.respond_to?(:request, true)
+
+        connection.send(:request).headers["Authorization"]
+      end
 
       def log_connection_change(old_connected, new_connected, source)
         return if old_connected == new_connected

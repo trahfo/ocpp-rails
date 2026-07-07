@@ -7,6 +7,7 @@ Welcome to the OCPP Rails documentation! This Rails engine provides complete OCP
 ### Getting Started
 - **[Installation & Setup](getting-started.md)** - Install the gem, run the generator, configure your application
 - **[Configuration](configuration.md)** - All configuration options and environment setup
+- **[Security](security.md)** - Charge point authentication (OCPP-J Security Profile 1) and TLS guidance
 - **[ActionCable with SQLite](actioncable-sqlite.md)** - WebSocket configuration using SQLite (no Redis required)
 
 ### Implementation Guides  
