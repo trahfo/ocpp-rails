@@ -45,7 +45,7 @@ The generator will:
 - `create_ocpp_messages.rb` - OCPP message audit log
 
 ✅ **Mount the Engine**
-- Adds `mount Ocpp::Rails::Engine => '/ocpp_admin'` to your `config/routes.rb`
+- Adds `mount Ocpp::Rails::Engine => '/ocpp'` to your `config/routes.rb`, which exposes the OCPP WebSocket endpoint at `/ocpp/cable`
 
 ✅ **Create Initializer**
 - Generates `config/initializers/ocpp_rails.rb` with default configuration
@@ -179,10 +179,10 @@ rails routes | grep ocpp
 
 You should see the mounted engine routes including:
 ```
-ocpp_admin     /ocpp_admin     Ocpp::Rails::Engine
+ocpp     /ocpp     Ocpp::Rails::Engine
 ```
 
-### Access Admin Interface
+### Verify the WebSocket Endpoint
 
 Start your Rails server:
 
@@ -190,9 +190,14 @@ Start your Rails server:
 rails server
 ```
 
-Visit: `http://localhost:3000/ocpp_admin`
+OCPP Rails is **backend-only** — there is no bundled dashboard or HTML UI. Mounting
+the engine exposes a single WebSocket endpoint that charge points connect to:
 
-You should see the OCPP Rails dashboard (may be empty until you create charge points).
+```
+ws://localhost:3000/ocpp/cable
+```
+
+You build your own UI on top of the models (`Ocpp::Rails::ChargePoint`, etc.).
 
 ## Create Your First Charge Point
 
@@ -347,7 +352,7 @@ rails db:migrate
 
 **Solution:** Check that `config/routes.rb` includes:
 ```ruby
-mount Ocpp::Rails::Engine => '/ocpp_admin'
+mount Ocpp::Rails::Engine => '/ocpp'
 ```
 
 ### WebSocket Connection Issues
@@ -355,10 +360,10 @@ mount Ocpp::Rails::Engine => '/ocpp_admin'
 **Problem:** Charge points can't connect via WebSocket
 
 **Solution:**
-1. Verify Redis is running
-2. Check `config/cable.yml` configuration
+1. Confirm stations point at `ws://your-host/ocpp/cable` (the engine mount path + `/cable`)
+2. In development/test no Redis is needed — the engine defaults to the async adapter; only configure `config/cable.yml` for multi-server production
 3. Ensure your server supports WebSockets
-4. Check firewall settings
+4. Check firewall settings and `config.action_cable.allowed_request_origins`
 
 ## Development vs Production
 

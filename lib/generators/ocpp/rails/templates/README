@@ -8,21 +8,33 @@ Next steps:
 
    rails db:migrate
 
-2. The engine is mounted at /ocpp_admin
+2. The engine is mounted at /ocpp
 
-   Visit http://localhost:3000/ocpp_admin to access the dashboard
+   OCPP Rails is a backend-only engine (no bundled UI). Mounting it exposes the
+   OCPP WebSocket endpoint; you build your own dashboard on top of the models.
 
-3. WebSocket endpoint for charge points:
+3. Point your charge points at the OCPP WebSocket endpoint:
 
-   ws://localhost:3000/ocpp_admin/ocpp/:charge_point_id
+   ws://localhost:3000/ocpp/cable
+
+   Each station subscribes to Ocpp::Rails::ChargePointChannel, passing its
+   charge_point_id. By default stations authenticate with HTTP Basic Auth on the
+   WebSocket upgrade (OCPP-J Security Profile 1), so provision a per-station
+   credential first:
+
+     charge_point.update!(auth_password: SecureRandom.base58(32))
 
 4. Configure OCPP settings in config/initializers/ocpp_rails.rb
 
-5. For ActionCable to work, ensure you have configured cable.yml:
+5. ActionCable transport:
 
-   development:
-     adapter: redis
-     url: redis://localhost:6379/1
+   No setup is required for development or test — the engine defaults to the
+   async adapter (SQLite-friendly, no Redis). For a multi-server production
+   deployment, configure a shared adapter in config/cable.yml, e.g.:
+
+     production:
+       adapter: redis
+       url: redis://localhost:6379/1
 
 6. Start your Rails server with:
 

@@ -26,7 +26,7 @@ module Ocpp
         end
 
         def mount_engine
-          route "mount Ocpp::Rails::Engine => '/ocpp_admin'"
+          route "mount Ocpp::Rails::Engine => '/ocpp'"
         end
 
         def create_initializer

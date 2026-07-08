@@ -247,11 +247,16 @@ end
 - Stores message type and payload
 - Enables message history and debugging
 
-### Controllers
+### Controllers (you build these)
 
-#### 1. ChargePointsController
+OCPP Rails is backend-only and ships **no** controllers. The snippets below are
+examples of actions you'd add to your *own* controllers to wire the remote-control
+jobs up to a UI.
+
+#### Example: remote start/stop on a charge points controller
 
 ```ruby
+# app/controllers/charge_points_controller.rb (in your app)
 def remote_start
   RemoteStartTransactionJob.perform_later(@charge_point.id, params[:connector_id], params[:id_tag])
   redirect_to @charge_point, notice: "Remote start command sent."
@@ -264,9 +269,10 @@ def remote_stop
 end
 ```
 
-#### 2. ChargingSessionsController
+#### Example: stopping from a charging sessions controller
 
 ```ruby
+# app/controllers/charging_sessions_controller.rb (in your app)
 def stop
   if @session.active?
     RemoteStopTransactionJob.perform_later(@session.charge_point_id, @session.transaction_id)
@@ -621,7 +627,7 @@ end
 ```ruby
 # config/routes.rb
 Rails.application.routes.draw do
-  mount Ocpp::Rails::Engine => '/ocpp_admin'
+  mount Ocpp::Rails::Engine => '/ocpp'
 end
 ```
 

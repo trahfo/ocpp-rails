@@ -114,9 +114,9 @@ sudo ufw allow 3000/tcp
 
 4. **Test WebSocket endpoint**:
 ```bash
-# Using wscat
+# Using wscat — charge points connect at the engine mount path + /cable
 npm install -g wscat
-wscat -c ws://localhost:3000/cable
+wscat -c ws://localhost:3000/ocpp/cable
 ```
 
 ### Database Connection Issues
@@ -412,7 +412,7 @@ end
 
 ### Routes Not Working
 
-**Problem**: 404 error when accessing `/ocpp_admin`
+**Problem**: 404 error when charge points connect to `/ocpp/cable`
 
 **Check**:
 ```bash
@@ -420,14 +420,14 @@ end
 rails routes | grep ocpp
 
 # Should show:
-# ocpp_admin     /ocpp_admin     Ocpp::Rails::Engine
+# ocpp     /ocpp     Ocpp::Rails::Engine
 ```
 
 **Solution**:
 ```ruby
 # config/routes.rb
 Rails.application.routes.draw do
-  mount Ocpp::Rails::Engine => '/ocpp_admin'
+  mount Ocpp::Rails::Engine => '/ocpp'
 end
 ```
 

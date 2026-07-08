@@ -272,7 +272,7 @@ production:
 ```ruby
 # config/routes.rb
 Rails.application.routes.draw do
-  mount Ocpp::Rails::Engine => '/ocpp_admin'
+  mount Ocpp::Rails::Engine => '/ocpp'
 end
 ```
 
@@ -302,7 +302,7 @@ Add authentication to OCPP routes:
 ```ruby
 # config/routes.rb
 authenticate :user, ->(user) { user.admin? } do
-  mount Ocpp::Rails::Engine => '/ocpp_admin'
+  mount Ocpp::Rails::Engine => '/ocpp'
 end
 ```
 
@@ -315,7 +315,7 @@ For API access:
 Rails.application.config.middleware.insert_before 0, Rack::Cors do
   allow do
     origins 'https://yourdomain.com'
-    resource '/ocpp_admin/*',
+    resource '/ocpp/*',
       headers: :any,
       methods: [:get, :post, :put, :patch, :delete, :options]
   end
