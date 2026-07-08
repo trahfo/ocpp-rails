@@ -16,8 +16,8 @@ jobs:
   push:
     runs-on: ubuntu-latest
 
-    # Required for OIDC trusted publishing. `contents: write` lets
-    # rubygems/release-gem create the matching GitHub Release.
+    # id-token: write is required for OIDC trusted publishing.
+    # contents: write lets `gh release create` below publish a GitHub Release.
     permissions:
       contents: write
       id-token: write
@@ -36,5 +36,30 @@ jobs:
           bundler-cache: true
           ruby-version: .ruby-version
 
-      - name: Build + push gem, create GitHub Release
+      - name: Build + push gem
         uses: rubygems/release-gem@v1
+
+      # rubygems/release-gem only builds+pushes the gem and tags the release
+      # commit; it does not create a GitHub Release. Do that here, using the
+      # matching section of CHANGELOG.md as the release notes when present.
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          notes="$(awk -v ver="$version" '
+            $0 ~ "^## \\[" ver "\\]" { found=1; next }
+            found && /^## \[/ { exit }
+            found { print }
+          ' CHANGELOG.md)"
+
+          if [ -n "$(echo "$notes" | tr -d '[:space:]')" ]; then
+            echo "$notes" > release-notes.md
+            gh release create "$GITHUB_REF_NAME" pkg/*.gem \
+              --title "$GITHUB_REF_NAME" \
+              --notes-file release-notes.md
+          else
+            gh release create "$GITHUB_REF_NAME" pkg/*.gem \
+              --title "$GITHUB_REF_NAME" \
+              --generate-notes
+          fi
