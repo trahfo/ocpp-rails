@@ -16,9 +16,8 @@ ocpp-rails/
 │   ├── remote-charging.md             # Remote charging implementation guide
 │   ├── api-reference.md               # Models, controllers, jobs API
 │   ├── message-reference.md           # OCPP message examples
-│   ├── testing.md                     # Testing guide (moved from test/ocpp/)
-│   ├── testing-manifest.md            # Test status tracking (moved)
-│   ├── testing-summary.md             # Test summary (moved)
+│   ├── testing.md                     # Testing guide (how to run & write tests)
+│   ├── octt-test-plan.md              # OCTT per-case compliance status (source of truth)
 │   └── troubleshooting.md             # Common issues & solutions
 ├── ocpp-1.6_edition_2.md             # OCPP spec (reference at root)
 └── test/ocpp/                         # Test files (no docs)
@@ -27,8 +26,8 @@ ocpp-rails/
 
 REMOVED:
 - test/ocpp/README.md                  → Moved to docs/testing.md
-- test/ocpp/TEST_MANIFEST.md          → Moved to docs/testing-manifest.md
-- test/ocpp/SUMMARY.md                 → Moved to docs/testing-summary.md
+- test/ocpp/TEST_MANIFEST.md          → consolidated into docs/octt-test-plan.md
+- test/ocpp/SUMMARY.md                 → consolidated into docs/octt-test-plan.md
 - REMOTE_CHARGING_IMPLEMENTATION.md   → Moved to docs/remote-charging.md
 ```
 
@@ -119,30 +118,18 @@ REMOVED:
 #### testing.md
 - **Purpose**: Testing guide
 - **Contents**:
-  - Test structure
-  - 20 OCPP use cases
-  - Running tests
-  - Test helper documentation
-  - Writing new tests
-  - Coverage metrics
-  - Links to manifest and summary
+  - Running the suite (single file / single test)
+  - Handler/job-driven vs simulation-style tests
+  - Test layout and the `OcppTestHelper`
+  - How to add a test for a new OCTT case
+  - Defers all coverage numbers to octt-test-plan.md
 
-#### testing-manifest.md
-- **Purpose**: Detailed test status tracking
+#### octt-test-plan.md
+- **Purpose**: OCTT Central-System compliance status — the source of truth
 - **Contents**:
-  - Test file status table
-  - Completed test coverage
-  - Pending tests
-  - OCPP message coverage
-  - Progress metrics
-
-#### testing-summary.md
-- **Purpose**: Quick test overview
-- **Contents**:
-  - Current status
-  - Test counts
-  - Quick start commands
-  - Key features tested
+  - Per-case status table (✅ / 🟡 / 🔴 / ⚪)
+  - Coverage-at-a-glance headline (mirrored by the README)
+  - Given/When/Then (Gherkin) spec for every case
 
 #### troubleshooting.md
 - **Purpose**: Common issues and solutions
