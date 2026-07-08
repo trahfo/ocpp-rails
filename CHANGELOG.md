@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.4] - 2026-07-08
+
+### Fixed
+- The `v0.2.3` tag was cut before the RubyGems trusted-publishing workflow
+  (`.github/workflows/push_gem.yml`) was added, so pushing it could never
+  trigger a publish — GitHub Actions resolves workflow files from the exact
+  commit a tag points to, not from `main`. `v0.2.3` is retired unused (the gem
+  was never actually published under it); `v0.2.4` is the real first release.
+
 ## [0.2.3] - 2026-07-08
 
 ### Added
