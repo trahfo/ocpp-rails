@@ -5,8 +5,8 @@ Thank you for your interest in contributing to OCPP Rails! This document provide
 ## Getting Started
 
 ### Prerequisites
-- Ruby 3.0+
-- Rails 7.0+ (optimized for Rails 8)
+- Ruby 4.0+
+- Rails 8.0+
 - SQLite3
 - Git
 
@@ -127,6 +127,12 @@ When implementing OCPP features:
 - Include message examples in documentation
 - Add integration tests covering full message flow
 - Handle all required and optional fields per spec
+
+## Releasing
+
+Maintainers: releases publish to RubyGems automatically from a `v*` git tag via
+trusted publishing. See [RELEASING.md](RELEASING.md) for the process and the
+one-time setup.
 
 ## Questions?
 

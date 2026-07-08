@@ -10,9 +10,14 @@ Gem::Specification.new do |spec|
   spec.description = "Use this engine to communicate to your EV Charging stations"
   spec.license     = "MIT"
 
-  spec.metadata["homepage_uri"] = spec.homepage
-  spec.metadata["source_code_uri"] = spec.homepage
-  spec.metadata["changelog_uri"] = "https://github.com/trahfo/ocpp-rails/blob/main/CHANGELOG.md"
+  spec.required_ruby_version = ">= 4.0"
+
+  spec.metadata["homepage_uri"]      = spec.homepage
+  spec.metadata["source_code_uri"]   = "#{spec.homepage}/tree/main"
+  spec.metadata["changelog_uri"]     = "#{spec.homepage}/blob/main/CHANGELOG.md"
+  spec.metadata["bug_tracker_uri"]   = "#{spec.homepage}/issues"
+  spec.metadata["documentation_uri"] = "#{spec.homepage}/blob/main/README.md"
+  spec.metadata["rubygems_mfa_required"] = "true"
 
   spec.files = Dir.chdir(File.expand_path(__dir__)) do
     Dir["{app,config,db,lib}/**/*", "MIT-LICENSE", "Rakefile", "README.md"]

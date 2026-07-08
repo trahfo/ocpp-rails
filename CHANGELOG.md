@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-07-08
+
+### Added
+- **First public release on [RubyGems.org](https://rubygems.org/gems/ocpp-rails).** Install with `gem install ocpp-rails` or add `gem "ocpp-rails"` to your Gemfile — no more Git-source dependency required.
+- Automated publishing via GitHub Actions [trusted publishing](https://guides.rubygems.org/trusted-publishing/) (OIDC): pushing a `v*` tag builds and pushes the gem to RubyGems with no stored API keys. See [RELEASING.md](RELEASING.md).
+
+### Changed
+- Gemspec now declares `required_ruby_version >= 4.0`, distinct `source_code_uri` / `changelog_uri` / `bug_tracker_uri` / `documentation_uri` metadata, and `rubygems_mfa_required`, clearing all `gem build` warnings.
+
 ## [0.2.2] - 2026-07-08
 
 ### Added
