@@ -60,7 +60,7 @@ Welcome to the OCPP Rails documentation! This Rails engine provides an OCPP 1.6 
 
 ## Features Overview
 
-_See the [per-case OCTT test plan](octt-test-plan.md) for the authoritative status. **27 of 76**
+_See the [per-case OCTT test plan](octt-test-plan.md) for the authoritative status. **32 of 76**
 OCTT Central-System cases are implemented and backed by real handler/job-driven tests._
 
 ### ✅ Implemented + tested
@@ -68,6 +68,7 @@ OCTT Central-System cases are implemented and backed by real handler/job-driven 
 - Remote start/stop transactions (delivery + end-to-end flow)
 - UnlockConnector — release a connector, including during an active session
 - Reset (Hard/Soft) and ClearCache — device reset and authorization-cache clearing
+- GetConfiguration / ChangeConfiguration and ChangeAvailability (Operative/Inoperative)
 - Real-time meter value monitoring (22+ measurands) + status / session broadcasts
 - Session management, energy/duration tracking, meter-anomaly + timestamp-provenance checks
 - Authorization support (RFID/ID tags) incl. Invalid / Expired / Blocked paths
@@ -75,8 +76,6 @@ OCTT Central-System cases are implemented and backed by real handler/job-driven 
 - Multi-connector support and a complete message audit trail
 
 ### 🔴 Not implemented yet
-- ChangeAvailability
-- Configuration management (Get/ChangeConfiguration)
 - Local authorization list sync (SendLocalList, GetLocalListVersion)
 - Firmware updates + Diagnostics upload
 - Reservation system (ReserveNow, CancelReservation)
@@ -103,5 +102,5 @@ Contributions are welcome! See our [Contributing Guide](../CONTRIBUTING.md) for 
 ---
 
 **Last Updated**: 2025-10-17  
-**Version**: 0.2.1  
+**Version**: 0.2.2  
 **OCPP**: 1.6 Edition 2

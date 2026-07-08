@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-07-08
+
+### Added
+- **GetConfiguration** outbound operation (`GetConfigurationJob`) — retrieve all keys (empty/omitted key list) or specific keys (OCTT TC_019_1 / TC_019_2).
+- **ChangeConfiguration** outbound operation (`ChangeConfigurationJob`) — set a key/value; Accepted, NotSupported, and Rejected confirmations are all recorded without error (OCTT TC_021 / TC_040_1 / TC_040_2).
+- **ChangeAvailability** outbound operation (`ChangeAvailabilityJob`) — Operative/Inoperative for a single connector or the whole charge point (connectorId 0); Accepted/Scheduled confirmations recorded. Completes the `ChangeAvailability` dependency noted in TC_048_3.
+- Handler/job-driven tests for all three, raising OCTT Central-System coverage to **32 of 76** cases — the full Core outbound command set is now implemented.
+
 ## [0.2.1] - 2026-07-07
 
 ### Added
@@ -91,6 +99,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Database Support:** PostgreSQL, MySQL, SQLite
 - **WebSocket Protocol:** RFC 6455 via ActionCable
 
+[0.2.2]: https://github.com/trahfo/ocpp-rails/releases/tag/v0.2.2
 [0.2.1]: https://github.com/trahfo/ocpp-rails/releases/tag/v0.2.1
 [0.2.0]: https://github.com/trahfo/ocpp-rails/releases/tag/v0.2.0
 [0.1.0]: https://github.com/trahfo/ocpp-rails/releases/tag/v0.1.0

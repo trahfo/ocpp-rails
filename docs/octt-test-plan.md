@@ -40,12 +40,12 @@ _Last updated: 2026-07-07. Measured against OCTT (2025-02) Section 3 (SUT = Cent
 
 | | Cases | Meaning |
 |---|---:|---|
-| ✅ Implemented + tested | 27 | Works **and** guarded by a real handler/job-driven test |
+| ✅ Implemented + tested | 32 | Works **and** guarded by a real handler/job-driven test |
 | 🟡 Implemented — needs test | 0 | Behavior works, only simulation-style coverage |
-| 🔴 Not implemented | 47 | Message/operation not in the engine yet |
+| 🔴 Not implemented | 42 | Message/operation not in the engine yet |
 | ⚪ Out of scope | 2 | TLS handshake (TC_086/087) — infra, not app code |
 
-**27 of 76 cases (36%) are backed by working code — and every one now has a real regression test** (the 🟡 bucket is empty). The remaining 47 span Configuration, Local Auth List, Firmware, Diagnostics, Reservation, Remote Trigger, Smart Charging, DataTransfer and Security profiles 2/3.
+**32 of 76 cases (42%) are backed by working code — and every one now has a real regression test** (the 🟡 bucket is empty). The remaining 42 span Local Auth List, Firmware, Diagnostics, Reservation, Remote Trigger, Smart Charging, DataTransfer and Security profiles 2/3.
 
 > The index below covers the **74 cases specified in this document**; the other 2 of the 76 OCTT Section-3 cases are not yet written up here and count as 🔴 Not implemented.
 
@@ -74,11 +74,11 @@ _Last updated: 2026-07-07. Measured against OCTT (2025-02) Section 3 (SUT = Cent
 | TC_017_1 | Unlock Connector – no session | ✅ | `unlock_connector_job_test.rb` |
 | TC_017_2 | Unlock Connector – no session (NotSupported) | ✅ | `unlock_connector_job_test.rb` |
 | TC_018_1 | Unlock Connector – with active session | ✅ | `unlock_connector_job_test.rb` |
-| TC_019_1 | Retrieve all configuration keys | 🔴 | no GetConfiguration |
-| TC_019_2 | Retrieve specific configuration key | 🔴 | no GetConfiguration |
-| TC_021 | Change/set Configuration | 🔴 | no ChangeConfiguration |
-| TC_040_1 | Configuration key – NotSupported | 🔴 | no ChangeConfiguration |
-| TC_040_2 | Configuration Keys – Invalid value | 🔴 | no ChangeConfiguration |
+| TC_019_1 | Retrieve all configuration keys | ✅ | `get_configuration_job_test.rb` |
+| TC_019_2 | Retrieve specific configuration key | ✅ | `get_configuration_job_test.rb` |
+| TC_021 | Change/set Configuration | ✅ | `change_configuration_job_test.rb` |
+| TC_040_1 | Configuration key – NotSupported | ✅ | `change_configuration_job_test.rb` |
+| TC_040_2 | Configuration Keys – Invalid value | ✅ | `change_configuration_job_test.rb` |
 | **[4. Authorize non-happy paths](#4-authorize-non-happy-paths)** | | | |
 | TC_023_1 | Authorize invalid | ✅ | `authorize_handler_test.rb` |
 | TC_023_2 | Authorize expired | ✅ | `authorize_handler_test.rb` |
@@ -450,8 +450,8 @@ Feature: Unlocking a connector during an active transaction stops it
 ```
 
 ### TC_019_1_CSMS — Retrieve all configuration keys
-**Ref:** 3.7.1 · **Status:** 🔴 Not implemented
-**Gap:** No outbound `GetConfiguration` operation.
+**Ref:** 3.7.1 · **Status:** ✅ Implemented + tested
+**Implemented:** `GetConfigurationJob` (`app/jobs/ocpp/rails/get_configuration_job.rb`), covered by `test/ocpp/get_configuration_job_test.rb`.
 **Suggested file:** `test/ocpp/get_configuration_job_test.rb`
 
 ```gherkin
@@ -468,7 +468,7 @@ Feature: Central System retrieves all configuration keys
 ```
 
 ### TC_019_2_CSMS — Retrieve specific configuration key
-**Ref:** 3.7.2 · **Status:** 🔴 Not implemented
+**Ref:** 3.7.2 · **Status:** ✅ Implemented + tested
 **Suggested file:** `test/ocpp/get_configuration_job_test.rb`
 
 ```gherkin
@@ -485,8 +485,8 @@ Feature: Central System retrieves one configuration key
 ```
 
 ### TC_021_CSMS — Change/set Configuration
-**Ref:** 3.7.3 · **Status:** 🔴 Not implemented
-**Gap:** No outbound `ChangeConfiguration` operation.
+**Ref:** 3.7.3 · **Status:** ✅ Implemented + tested
+**Implemented:** `ChangeConfigurationJob` (`app/jobs/ocpp/rails/change_configuration_job.rb`), covered by `test/ocpp/change_configuration_job_test.rb`.
 **Suggested file:** `test/ocpp/change_configuration_job_test.rb`
 
 ```gherkin
@@ -503,7 +503,7 @@ Feature: Central System changes a configuration value
 ```
 
 ### TC_040_1_CSMS — Configuration key - NotSupported
-**Ref:** 3.13.1 · **Status:** 🔴 Not implemented
+**Ref:** 3.13.1 · **Status:** ✅ Implemented + tested
 **Suggested file:** `test/ocpp/change_configuration_job_test.rb`
 
 ```gherkin
@@ -515,7 +515,7 @@ Feature: Central System handles an unsupported configuration key
 ```
 
 ### TC_040_2_CSMS — Configuration Keys - Invalid value
-**Ref:** 3.13.2 · **Status:** 🔴 Not implemented
+**Ref:** 3.13.2 · **Status:** ✅ Implemented + tested
 **Suggested file:** `test/ocpp/change_configuration_job_test.rb`
 
 ```gherkin
@@ -905,7 +905,7 @@ Feature: Central System handles a reservation attempt on an occupied connector
 
 ### TC_048_3_CSMS — Reservation - Unavailable
 **Ref:** 3.17.1 · **Status:** 🔴 Not implemented
-**Note:** also exercises outbound `ChangeAvailability` (type Inoperative), itself unimplemented.
+**Note:** also exercises outbound `ChangeAvailability` (type Inoperative) — now implemented (`ChangeAvailabilityJob`, tested in `test/ocpp/change_availability_job_test.rb`); the ReserveNow half is still 🔴.
 **Suggested file:** `test/ocpp/reservation_test.rb`
 
 ```gherkin
