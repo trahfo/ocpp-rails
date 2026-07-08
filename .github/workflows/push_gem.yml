@@ -1,0 +1,40 @@
+name: Push gem to RubyGems
+
+# Publishes ocpp-rails to https://rubygems.org via OIDC trusted publishing.
+# No API keys are stored: RubyGems mints a short-lived token for this exact
+# repository + workflow at push time. See RELEASING.md for the one-time setup.
+#
+# Trigger: push a version tag, e.g.
+#   git tag v0.2.3 && git push origin v0.2.3
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  push:
+    runs-on: ubuntu-latest
+
+    # Required for OIDC trusted publishing. `contents: write` lets
+    # rubygems/release-gem create the matching GitHub Release.
+    permissions:
+      contents: write
+      id-token: write
+
+    # Must match the environment name registered on rubygems.org.
+    environment: release
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+          ruby-version: .ruby-version
+
+      - name: Build + push gem, create GitHub Release
+        uses: rubygems/release-gem@v1
