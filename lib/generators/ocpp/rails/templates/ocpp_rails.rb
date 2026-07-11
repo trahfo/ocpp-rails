@@ -10,4 +10,11 @@ Ocpp::Rails.setup do |config|
 
   # Connection timeout in seconds
   config.connection_timeout = 30
+
+  # Session lifecycle hooks: objects responding to
+  # call(charging_session, event) with event "started" or "stopped".
+  # Define async? => true on a hook to run it via ActiveJob instead of
+  # inline. Example:
+  #
+  #   config.register_session_hook(MySessionHook.new)
 end

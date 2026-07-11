@@ -36,7 +36,7 @@ module Ocpp
       attr_accessor :ocpp_version, :supported_versions, :heartbeat_interval, :connection_timeout,
                     :state_change_hooks, :state_change_retention_days, :state_change_cleanup_enabled,
                     :authorization_hooks, :authorization_retention_days, :authorization_cleanup_enabled,
-                    :implausible_energy_jump_wh, :authentication_mode,
+                    :session_hooks, :implausible_energy_jump_wh, :authentication_mode,
                     :max_messages_per_minute, :max_connection_attempts_per_minute
 
       def initialize
@@ -47,6 +47,7 @@ module Ocpp
         @connection_timeout = 30
         @state_change_hooks = []
         @authorization_hooks = []
+        @session_hooks = []
         @state_change_retention_days = 30
         @state_change_cleanup_enabled = true
         @authorization_retention_days = 30
@@ -76,6 +77,13 @@ module Ocpp
           raise ArgumentError, "Hook must respond to :call method"
         end
         @authorization_hooks << hook
+      end
+
+      def register_session_hook(hook)
+        unless hook.respond_to?(:call)
+          raise ArgumentError, "Hook must respond to :call method"
+        end
+        @session_hooks << hook
       end
     end
   end

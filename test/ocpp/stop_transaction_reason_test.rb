@@ -38,14 +38,14 @@ module Ocpp
       end
 
       # Leg 3: after the transaction stops, the connector transitions
-      # Finishing -> Available and the charge point ends up Available.
+      # Finishing -> Available as reported by the station.
       test "connector returns to Available after the transaction stops" do
         stop_transaction("EVDisconnected")
 
         assert_equal({}, notify_status("Finishing"))
         assert_equal({}, notify_status("Available"))
 
-        assert_equal "Available", @cp.reload.status
+        assert_equal "Available", @cp.reload.connector_status(1)
       end
 
       # End-to-end TC_005_1 walkthrough exercising every leg in order.
@@ -65,7 +65,7 @@ module Ocpp
         assert_equal({}, notify_status("Finishing"))
         assert_equal({}, notify_status("Available"))
 
-        assert_equal "Available", @cp.reload.status
+        assert_equal "Available", @cp.reload.connector_status(1)
       end
 
       private

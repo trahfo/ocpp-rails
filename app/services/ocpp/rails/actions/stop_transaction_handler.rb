@@ -34,10 +34,13 @@ module Ocpp
             process_transaction_data(session, @payload["transactionData"])
           end
 
-          # Update charge point status if no other active sessions
-          if @charge_point.charging_sessions.active.empty?
-            @charge_point.update(status: "Available")
-          end
+          # Connector status is owned by StatusNotification (OCPP 1.6); the
+          # station reports Finishing/Available itself after the transaction.
+
+          # Fired after transactionData so hooks see the Transaction.End
+          # meter values. Stations recovering from an offline period may
+          # still deliver queued MeterValues after this point.
+          Ocpp::Rails::SessionHookManager.execute_hooks(session, "stopped")
 
           # Broadcast session stopped event for real-time UI updates
           broadcast_session_stopped(session)

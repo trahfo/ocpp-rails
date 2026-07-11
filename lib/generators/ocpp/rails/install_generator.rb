@@ -23,6 +23,8 @@ module Ocpp
           migration_template "create_ocpp_meter_values.rb", "db/migrate/create_ocpp_meter_values.rb"
           sleep 1
           migration_template "create_ocpp_messages.rb", "db/migrate/create_ocpp_messages.rb"
+          sleep 1
+          migration_template "create_ocpp_connector_statuses.rb", "db/migrate/create_ocpp_connector_statuses.rb"
         end
 
         def mount_engine

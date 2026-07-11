@@ -51,8 +51,12 @@ module Ocpp
 
           ::Rails.logger.info("[OCPP] StartTransaction from #{@charge_point.identifier}: Connector #{@payload['connectorId']}, Transaction ID: #{session.transaction_id}")
 
-          # Update charge point status
-          @charge_point.update(status: "Charging")
+          # Connector status is owned by StatusNotification (OCPP 1.6); a
+          # transaction starting says nothing about ChargePoint#status.
+
+          # Duplicate/replayed StartTransactions resume the open session
+          # above and intentionally do not re-fire this hook.
+          Ocpp::Rails::SessionHookManager.execute_hooks(session, "started")
 
           # Broadcast session started event for real-time UI updates
           broadcast_session_started(session)

@@ -15,7 +15,7 @@ module Ocpp
         response = status_notification(connector_id: 1, status: "Preparing")
 
         assert_equal({}, response)
-        assert_equal "Preparing", @cp.reload.metadata["connector_1_status"]
+        assert_equal "Preparing", @cp.reload.connector_status(1)
       end
 
       # TC_003: A "Charging" status notification is acknowledged and stored.
@@ -24,7 +24,7 @@ module Ocpp
         response = status_notification(connector_id: 1, status: "Charging")
 
         assert_equal({}, response)
-        assert_equal "Charging", @cp.reload.metadata["connector_1_status"]
+        assert_equal "Charging", @cp.reload.connector_status(1)
       end
 
       # TC_004_1 / TC_004_2: Connector reverting to "Available" is acknowledged and recorded.
@@ -34,7 +34,7 @@ module Ocpp
 
         assert_equal({}, preparing)
         assert_equal({}, available)
-        assert_equal "Available", @cp.reload.metadata["connector_1_status"]
+        assert_equal "Available", @cp.reload.connector_status(1)
       end
 
       # TC_004_1 / TC_004_2: A StateChange row is recorded only on an actual transition.
@@ -56,6 +56,22 @@ module Ocpp
         assert_equal "Unavailable", @cp.reload.status
       end
 
+      # OCPP 1.6: connector 0's status has no direct connection to the
+      # status of individual connectors, and vice versa.
+      test "connector-scoped notification leaves charge point status and metadata untouched" do
+        status_notification(connector_id: 1, status: "Charging")
+
+        @cp.reload
+        assert_equal "Available", @cp.status
+        assert_not @cp.metadata.key?("connector_1_status")
+      end
+
+      test "connectorId 0 does not create a connector status record" do
+        status_notification(connector_id: 0, status: "Faulted")
+
+        assert_nil @cp.reload.connector_status(0)
+      end
+
       # TC_024: Connector lock failure (Faulted + ConnectorLockFailure) is stored and acknowledged.
       test "TC_024 connector lock failure is stored and acknowledged" do
         response = status_notification(
@@ -67,8 +83,8 @@ module Ocpp
         assert_equal({}, response)
 
         @cp.reload
-        assert_equal "Faulted", @cp.metadata["connector_1_status"]
-        assert_equal "ConnectorLockFailure", @cp.metadata["connector_1_error_code"]
+        assert_equal "Faulted", @cp.connector_status(1)
+        assert_equal "ConnectorLockFailure", @cp.connector_error_code(1)
 
         state_change = @cp.state_changes.status_changes.where(new_value: "Faulted").last
         assert_not_nil state_change, "expected a StateChange row for the Faulted transition"

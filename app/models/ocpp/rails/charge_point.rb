@@ -4,6 +4,7 @@ module Ocpp
       self.table_name = "ocpp_charge_points"
 
       has_many :charging_sessions, dependent: :destroy, class_name: "Ocpp::Rails::ChargingSession"
+      has_many :connector_statuses, dependent: :destroy, class_name: "Ocpp::Rails::ConnectorStatus"
       has_many :meter_values, dependent: :destroy, class_name: "Ocpp::Rails::MeterValue"
       has_many :messages, dependent: :destroy, class_name: "Ocpp::Rails::Message"
       has_many :state_changes, dependent: :destroy, class_name: "Ocpp::Rails::StateChange"
@@ -14,7 +15,9 @@ module Ocpp
 
       scope :connected, -> { where(connected: true) }
       scope :available, -> { where(status: "Available") }
-      scope :charging, -> { where(status: "Charging") }
+      # Charging is a fact about sessions, not about ChargePoint#status
+      # (which only ever holds connector-0 values: Available/Unavailable/Faulted).
+      scope :charging, -> { joins(:charging_sessions).merge(Ocpp::Rails::ChargingSession.active).distinct }
 
       # Stores the station's Basic Auth password as a SHA-256 digest.
       # OCPP-J passwords are high-entropy machine credentials (the spec
@@ -63,6 +66,23 @@ module Ocpp
 
       def available?
         status == "Available" && connected?
+      end
+
+      # Last status the station reported for this connector via
+      # StatusNotification; nil until the connector has reported once.
+      def connector_status(connector_id)
+        connector_statuses.find_by(connector_id: connector_id)&.status
+      end
+
+      def connector_error_code(connector_id)
+        connector_statuses.find_by(connector_id: connector_id)&.error_code
+      end
+
+      # Whether a transaction is running on the connector. Authoritative by
+      # definition, unlike connector_status which is only as fresh as the
+      # station's last StatusNotification.
+      def connector_charging?(connector_id)
+        charging_sessions.active.where(connector_id: connector_id).exists?
       end
     end
   end

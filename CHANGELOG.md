@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-07-12
+
+### Added
+- **Per-connector status tracking.** `Ocpp::Rails::ConnectorStatus` (table `ocpp_connector_statuses`) is a first-class model holding the last status/error code a station reported per connector, replacing the old `metadata["connector_<n>_status"]` convention. Read it via `ChargePoint#connector_status(connector_id)` / `#connector_error_code(connector_id)`. `ChargePoint#connector_charging?(connector_id)` derives a session-based "is this connector transacting right now" signal, independent of StatusNotification timing.
+- **Session lifecycle hooks.** `config.register_session_hook(hook)` registers an object responding to `call(charging_session, event)` (`event` is `"started"` or `"stopped"`), fired from `StartTransactionHandler`/`StopTransactionHandler` — no more polling `ChargingSession.active`. Hooks with `async? => true` run via the new `SessionAsyncHookJob`, mirroring the existing authorization/state-change hook pattern. `"stopped"` fires after `transactionData` meter values are persisted, so a hook can read final energy/CDR data immediately. Duplicate/replayed `StartTransaction`s that resume an already-open session intentionally do not re-fire `"started"`.
+- `bin/rails generate ocpp:rails:install` now also copies the `ocpp_connector_statuses` migration and documents `session_hooks` in the generated initializer.
+
+### Changed
+- **Breaking:** `StartTransactionHandler`/`StopTransactionHandler` no longer write `ChargePoint#status`. Per OCPP 1.6, connector 0's status has no direct connection to any individual connector's status — whole-station `status` is now driven exclusively by connector-0 `StatusNotification`s (plus `BootNotification`/`Heartbeat` connectivity). This fixes a real bug on multi-connector stations: starting or stopping a transaction on one connector no longer flips the whole station's status, stomping on a sibling connector's state.
+- **Breaking:** `ChargePoint.charging` scope is now session-derived (`ChargePoint`s with at least one active `ChargingSession`, any connector) instead of matching on `status == "Charging"`, since `status` no longer takes that value from the transaction lifecycle.
+- A migration backfills existing `metadata["connector_<n>_status"/"_error_code"]` keys into `ocpp_connector_statuses` and removes them from `metadata`. Any rows already written by the new StatusNotification path (i.e. on a station that already reported since upgrading) win over the legacy metadata.
+
+### Upgrade notes
+- Run `bin/rails ocpp_rails:install:migrations && bin/rails db:migrate` to add `ocpp_connector_statuses` and backfill it from `metadata`.
+- If you read `charge_point.metadata["connector_<n>_status"]` or relied on `ChargePoint.charging`/`status` reflecting an in-progress transaction, switch to `connector_status`/`connector_charging?`.
+
 ## [0.2.4] - 2026-07-08
 
 ### Fixed

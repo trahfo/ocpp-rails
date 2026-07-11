@@ -82,15 +82,16 @@ module Ocpp
         assert_equal "CACHED_TAG", session.id_tag
       end
 
-      # TC_003 (start leg): an accepted idTag drives the connector into the
-      # Charging state, both on the session and on the charge point.
-      test "accepted idTag moves the session and charge point to Charging" do
+      # TC_003 (start leg): an accepted idTag drives the session into the
+      # Charging state. Whole-station status is owned by connector-0
+      # StatusNotifications and stays untouched.
+      test "accepted idTag moves the session to Charging without touching station status" do
         response = start_transaction(id_tag: "GOOD_TAG")
 
         session = @charge_point.charging_sessions.last
         assert_equal response["transactionId"], session.transaction_id
         assert_equal "Charging", session.status
-        assert_equal "Charging", @charge_point.reload.status
+        assert_equal "Available", @charge_point.reload.status
       end
 
       private

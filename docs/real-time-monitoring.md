@@ -178,141 +178,39 @@ function getStatusColor(status) {
 
 ## Monitoring Connector Status
 
-### Using Models
-
-Connector status is stored in the charge point's metadata JSON field:
+Per-connector status is a first-class model (`Ocpp::Rails::ConnectorStatus`, table `ocpp_connector_statuses`), written by `StatusNotificationHandler` whenever the station reports a connector (`connectorId >= 1`). Notifications for `connectorId == 0` (the charge point main controller) update `ChargePoint#status` instead — per OCPP 1.6, connector 0 only takes `Available`, `Unavailable`, or `Faulted`, and its status has no direct connection to any individual connector.
 
 ```ruby
 cp = Ocpp::Rails::ChargePoint.find_by(identifier: "CP001")
 
-# Get connector 1 status
-connector_1_status = cp.metadata["connector_1_status"]
-# => "Available", "Charging", "Preparing", "Finishing", etc.
+# Last status the station reported for a connector (nil until it reports once)
+cp.connector_status(1)
+# => "Available", "Charging", "Preparing", "Finishing", ...
 
-# Get connector error code
-connector_1_error = cp.metadata["connector_1_error_code"]
-# => "NoError", "ConnectorLockFailure", etc.
+# Last error code the station reported for a connector
+cp.connector_error_code(1)
+# => "NoError", "ConnectorLockFailure", ...
 
-# Get last update time
-connector_1_updated = cp.metadata["connector_1_updated_at"]
-# => "2024-01-15T10:30:00Z"
+# Whether a transaction is currently running on the connector.
+# Derived from active ChargingSessions, so it is authoritative even if the
+# station is slow to send StatusNotifications.
+cp.connector_charging?(1)
+# => true / false
 
-# List all connectors
-connectors = cp.metadata.select { |k, v| k.start_with?("connector_") && k.end_with?("_status") }
-# => {"connector_1_status"=>"Available", "connector_2_status"=>"Charging"}
-```
-
-### Best Practice: Connector Model (Optional)
-
-For better organization and queries, consider creating a Connector model in your app:
-
-```ruby
-# db/migrate/XXXXXX_create_connectors.rb
-class CreateConnectors < ActiveRecord::Migration[7.0]
-  def change
-    create_table :connectors do |t|
-      t.references :charge_point, null: false, foreign_key: { to_table: :ocpp_charge_points }
-      t.integer :connector_id, null: false
-      t.string :status, default: 'Unknown'
-      t.string :error_code, default: 'NoError'
-      t.string :info
-      t.datetime :last_update_at
-      t.timestamps
-    end
-
-    add_index :connectors, [:charge_point_id, :connector_id], unique: true
-  end
+# All connector records, with timestamps
+cp.connector_statuses.order(:connector_id).each do |connector|
+  puts "Connector #{connector.connector_id}: #{connector.status} (#{connector.error_code}, updated #{connector.updated_at})"
 end
 ```
 
-```ruby
-# app/models/connector.rb
-class Connector < ApplicationRecord
-  belongs_to :charge_point, class_name: "Ocpp::Rails::ChargePoint"
+Note the difference between the two signals:
 
-  STATUSES = %w[Available Preparing Charging SuspendedEVSE SuspendedEV 
-                Finishing Reserved Unavailable Faulted].freeze
+- `connector_status(n)` — what the station last *reported* via StatusNotification. Distinguishes `Charging` from `SuspendedEV`/`SuspendedEVSE`, but is only as fresh as the last report.
+- `connector_charging?(n)` — whether a transaction is *actually open* on the connector, straight from the session records.
 
-  validates :connector_id, presence: true, uniqueness: { scope: :charge_point_id }
-  validates :status, inclusion: { in: STATUSES }
+Whole-station scopes and helpers stay at the station level: `ChargePoint#status` / `#available?` describe the unit's own operative state, and `ChargePoint.charging` returns stations with at least one active session on any connector.
 
-  scope :available, -> { where(status: 'Available') }
-  scope :charging, -> { where(status: 'Charging') }
-  scope :faulted, -> { where.not(error_code: 'NoError') }
-
-  def available?
-    status == 'Available' && error_code == 'NoError'
-  end
-
-  def faulted?
-    error_code != 'NoError'
-  end
-end
-```
-
-#### Override StatusNotificationHandler (Advanced)
-
-To populate your Connector model, override the handler:
-
-```ruby
-# app/services/ocpp/rails/actions/status_notification_handler.rb
-module Ocpp
-  module Rails
-    module Actions
-      class StatusNotificationHandler
-        def initialize(charge_point, message_id, payload)
-          @charge_point = charge_point
-          @message_id = message_id
-          @payload = payload
-        end
-
-        def call
-          connector_id = @payload['connectorId']
-          status = @payload['status']
-
-          # Update or create connector record
-          connector = Connector.find_or_create_by(
-            charge_point: @charge_point,
-            connector_id: connector_id
-          )
-
-          connector.update(
-            status: status,
-            error_code: @payload['errorCode'] || 'NoError',
-            info: @payload['info'],
-            last_update_at: Time.current
-          )
-
-          # Also update charge point status if connector 0 (whole station)
-          if connector_id == 0
-            @charge_point.update(status: status)
-          end
-
-          # Broadcast status change
-          broadcast_status_change
-
-          {}
-        end
-
-        private
-
-        def broadcast_status_change
-          ActionCable.server.broadcast(
-            "charge_point_#{@charge_point.id}_status",
-            {
-              connector_id: @payload['connectorId'],
-              status: @payload['status'],
-              error_code: @payload['errorCode'],
-              info: @payload['info'],
-              timestamp: Time.current.iso8601
-            }
-          )
-        end
-      end
-    end
-  end
-end
-```
+> **Upgrading from < 0.3.0:** connector status used to live in `ChargePoint#metadata` under `connector_<n>_status` / `connector_<n>_error_code` / `connector_<n>_updated_at` keys. The `BackfillOcppConnectorStatuses` migration moves those values into the new table and removes the keys from `metadata`.
 
 ---
 

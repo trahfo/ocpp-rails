@@ -111,6 +111,45 @@ retry with exponential backoff and jitter; the connection limit above
 protects each identifier, not the aggregate. If your fleet legitimately
 reconnects faster than 12 attempts/minute per station, raise the limit.
 
+## Hooks
+
+Three hook families let the consuming application react to OCPP events
+without polling. All are registered in the initializer, and every hook is
+an object responding to `call`; a hook whose `async?` method returns `true`
+is dispatched through ActiveJob (queue `ocpp_hooks`) instead of running
+inline. A raising hook is logged and never affects the OCPP response sent
+to the station.
+
+#### `session_hooks`
+- **Registered with**: `config.register_session_hook(hook)`
+- **Signature**: `call(charging_session, event)` with `event` `"started"` or `"stopped"`
+- **Description**: Fires when a `ChargingSession` starts or stops on the wire — `"started"` right after `StartTransaction` creates the session, `"stopped"` after `StopTransaction` has closed the session **and** persisted any `transactionData` meter values, so a hook building billing records (e.g. OCPI CDRs) already sees `energy_consumed` and the `Transaction.End` samples. A station retransmitting `StartTransaction` for an already-open session resumes it without re-firing `"started"`. Stations recovering from an offline period may still deliver queued `MeterValues` after the `"stopped"` hook has fired, so derive totals from `charging_session.energy_consumed` rather than counting meter rows at hook time.
+
+```ruby
+class CdrPublisher
+  def async? = true
+
+  def call(charging_session, event)
+    return unless event == "stopped"
+    # build + push the CDR ...
+  end
+end
+
+Ocpp::Rails.setup do |config|
+  config.register_session_hook(CdrPublisher.new)
+end
+```
+
+#### `state_change_hooks`
+- **Registered with**: `config.register_state_change_hook(hook)`
+- **Signature**: `call(state_change)`
+- **Description**: Fires for every `StateChange` row — connector/station status transitions (from `StatusNotification`) and connection changes (boot, heartbeat reconnect, disconnect).
+
+#### `authorization_hooks`
+- **Registered with**: `config.register_authorization_hook(hook)`
+- **Signature**: `call(charge_point_id, id_tag)` returning `{ status:, expiry_date: }`
+- **Description**: Decision hooks consulted by `Authorize` and `StartTransaction` to validate idTags. Synchronous hooks decide the wire response; async hooks observe the persisted `Authorization` afterwards.
+
 ## Environment-Specific Configuration
 
 ### Development

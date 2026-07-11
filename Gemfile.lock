@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    ocpp-rails (0.2.4)
+    ocpp-rails (0.3.0)
       rails (>= 8.0.0)
       websocket-driver (~> 0.7)
 

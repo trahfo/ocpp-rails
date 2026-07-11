@@ -8,6 +8,7 @@ Complete reference for OCPP Rails models, controllers, jobs, and helpers.
 
 - [Models](#models)
   - [ChargePoint](#chargepoint)
+  - [ConnectorStatus](#connectorstatus)
   - [ChargingSession](#chargingsession)
   - [MeterValue](#metervalue)
   - [Message](#message)
@@ -39,7 +40,7 @@ Represents a physical EV charging station.
 | `meter_type` | String | Type of energy meter |
 | `meter_serial_number` | String | Meter serial number |
 | `ocpp_protocol` | String | OCPP protocol version (default: "1.6") |
-| `status` | String | Current status (default: "Available") |
+| `status` | String | Whole-station status from connector-0 StatusNotifications: "Available", "Unavailable", or "Faulted" (default: "Available"). Per-connector status lives on [ConnectorStatus](#connectorstatus). |
 | `last_heartbeat_at` | DateTime | Last heartbeat timestamp |
 | `connected` | Boolean | Connection state (default: false) |
 | `metadata` | JSONB | Additional data (default: {}) |
@@ -48,6 +49,7 @@ Represents a physical EV charging station.
 
 ```ruby
 has_many :charging_sessions, dependent: :destroy
+has_many :connector_statuses, dependent: :destroy
 has_many :meter_values, dependent: :destroy
 has_many :messages, dependent: :destroy
 ```
@@ -70,9 +72,9 @@ Ocpp::Rails::ChargePoint.connected
 Ocpp::Rails::ChargePoint.available
 # => WHERE status = 'Available'
 
-# Charging charge points
+# Charge points with at least one active charging session
 Ocpp::Rails::ChargePoint.charging
-# => WHERE status = 'Charging'
+# => JOIN ocpp_charging_sessions WHERE stopped_at IS NULL (DISTINCT)
 ```
 
 #### Instance Methods
@@ -108,11 +110,41 @@ session = charge_point.current_session
 
 ##### `available?`
 
-Checks if charge point is available for charging.
+Checks if the station as a whole is operative and connected.
 
 ```ruby
 charge_point.available?
 # Returns true if status == "Available" && connected == true
+# Says nothing about individual connectors — use connector_status for that
+```
+
+##### `connector_status(connector_id)`
+
+Last status the station reported for a connector via StatusNotification.
+
+```ruby
+charge_point.connector_status(1)
+# => "Available", "Charging", "SuspendedEV", ... or nil if never reported
+```
+
+##### `connector_error_code(connector_id)`
+
+Last error code the station reported for a connector.
+
+```ruby
+charge_point.connector_error_code(1)
+# => "NoError", "ConnectorLockFailure", ... or nil if never reported
+```
+
+##### `connector_charging?(connector_id)`
+
+Whether a transaction is currently open on the connector, derived from
+active ChargingSessions (authoritative regardless of StatusNotification
+timing).
+
+```ruby
+charge_point.connector_charging?(1)
+# => true / false
 ```
 
 #### Example Usage
@@ -140,6 +172,38 @@ session = cp.current_session
 connected_cps = Ocpp::Rails::ChargePoint.connected.count
 available_cps = Ocpp::Rails::ChargePoint.available
 ```
+
+---
+
+### ConnectorStatus
+
+The last status a station reported for one connector via StatusNotification. One row per `(charge_point_id, connector_id)`, upserted on every notification for `connectorId >= 1`. Connector 0 is never stored here — it updates `ChargePoint#status` instead.
+
+**Location**: `app/models/ocpp/rails/connector_status.rb`
+
+#### Attributes
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `charge_point_id` | Integer | Owning charge point (required) |
+| `connector_id` | Integer | Connector number, >= 1 (required) |
+| `status` | String | Last reported status, e.g. "Available", "Charging", "SuspendedEV" (required) |
+| `error_code` | String | Last reported error code, e.g. "NoError" |
+
+#### Associations
+
+```ruby
+belongs_to :charge_point
+```
+
+#### Validations
+
+```ruby
+validates :connector_id, presence: true, numericality: { greater_than_or_equal_to: 1, only_integer: true }, uniqueness: { scope: :charge_point_id }
+validates :status, presence: true
+```
+
+Read through `ChargePoint#connector_status(connector_id)` / `#connector_error_code(connector_id)` rather than querying this model directly.
 
 ---
 
@@ -611,6 +675,22 @@ CREATE TABLE ocpp_charge_points (
 );
 
 CREATE UNIQUE INDEX idx_cp_identifier ON ocpp_charge_points(identifier);
+```
+
+### ocpp_connector_statuses
+
+```sql
+CREATE TABLE ocpp_connector_statuses (
+  id BIGINT PRIMARY KEY,
+  charge_point_id BIGINT NOT NULL REFERENCES ocpp_charge_points(id),
+  connector_id INTEGER NOT NULL,
+  status VARCHAR NOT NULL,
+  error_code VARCHAR,
+  created_at TIMESTAMP NOT NULL,
+  updated_at TIMESTAMP NOT NULL
+);
+
+CREATE UNIQUE INDEX idx_ocs_charge_point_connector ON ocpp_connector_statuses(charge_point_id, connector_id);
 ```
 
 ### ocpp_charging_sessions

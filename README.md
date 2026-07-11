@@ -24,7 +24,8 @@ OCPP message layer.
 ### OCPP Protocol Layer (What This Gem Provides)
 - 📡 **WebSocket Communication** - ActionCable channel handles bidirectional OCPP messages
 - 🔌 **Protocol Handlers** - BootNotification, Authorize, Heartbeat, StartTransaction, StopTransaction, MeterValues, StatusNotification
-- 🗄️ **Data Models** - ChargePoint, ChargingSession, MeterValue, Message (audit log)
+- 🗄️ **Data Models** - ChargePoint, ConnectorStatus, ChargingSession, MeterValue, Message (audit log)
+- 🪝 **Lifecycle Hooks** - authorization, state-change, and session-start/stop hooks (sync or async via ActiveJob) — react without polling
 - 🚀 **Remote Control Jobs** - RemoteStartTransaction, RemoteStopTransaction, UnlockConnector, Reset, ClearCache, GetConfiguration, ChangeConfiguration, ChangeAvailability
 - 📊 **Real-time Broadcasts** - ActionCable broadcasts for status, sessions, and meter values
 - 💾 **SQLite Compatible** - Works with async adapter, no Redis required for development
@@ -40,7 +41,7 @@ OCPP message layer.
 - ✅ **Core session flow** — inbound BootNotification, Authorize, Heartbeat, Start/StopTransaction, MeterValues, StatusNotification
 - ✅ **Remote Control** — RemoteStartTransaction, RemoteStopTransaction, UnlockConnector (delivery + end-to-end flow, tested)
 - ✅ **Message Audit** — every inbound/outbound frame logged for debugging and compliance
-- ✅ **Multi-connector** — one active session per connector, enforced at the DB level
+- ✅ **Multi-connector** — one active session per connector, enforced at the DB level; per-connector status tracked independently of whole-station status
 - 🚧 **Everything else** — see the honest, per-test-case [OCPP 1.6 Compliance Status](#-ocpp-16-compliance-status) below
 
 ## 📋 OCPP 1.6 Compliance Status
@@ -157,17 +158,25 @@ and the [Security Guide](docs/security.md).
 
 ### Monitor Charge Point Status
 
+`ChargePoint#status` is the whole-station status (from connector-0
+StatusNotifications: Available/Unavailable/Faulted) — it says nothing about
+any individual connector once a station has more than one.
+
 ```ruby
 # Query charge points
 connected_cps = Ocpp::Rails::ChargePoint.connected
 available_cps = Ocpp::Rails::ChargePoint.available
-charging_cps = Ocpp::Rails::ChargePoint.charging
+charging_cps = Ocpp::Rails::ChargePoint.charging  # any active session, any connector
 
 # Check specific charge point
 cp = Ocpp::Rails::ChargePoint.find_by(identifier: "CP001")
 cp.connected?       # => true/false
-cp.status           # => "Available", "Charging", etc.
+cp.status           # => whole-station status: "Available", "Unavailable", "Faulted"
 cp.last_heartbeat_at
+
+# Per-connector status (independent of any other connector on the same station)
+cp.connector_status(1)      # => "Available", "Charging", "SuspendedEV", ...
+cp.connector_charging?(1)   # => true/false, derived from active sessions
 ```
 
 ### Monitor Active Sessions
@@ -269,8 +278,12 @@ For complete implementation examples, see the [Remote Charging Guide](docs/remot
 
 - **`Ocpp::Rails::ChargePoint`** - Represents a physical charging station
   - Tracks connection status, firmware version, vendor info
-  - Has many charging sessions and meter values
-  - Provides status scopes (connected, available, charging)
+  - Has many charging sessions, connector statuses, and meter values
+  - Provides status scopes (connected, available, charging) and per-connector reads (`connector_status`, `connector_charging?`)
+
+- **`Ocpp::Rails::ConnectorStatus`** - Last reported status for one connector
+  - One row per `(charge_point, connector_id)`, written by StatusNotification
+  - Independent of whole-station status and of any other connector's activity
 
 - **`Ocpp::Rails::ChargingSession`** - Represents a charging transaction
   - Manages session lifecycle (active/completed)

@@ -46,13 +46,12 @@ module Ocpp
         assert_equal "Remote", session.stop_reason
       end
 
-      # TC_012 step 2: once the transaction is stopped, the connector cycles back
-      # to Available. The charge point returns to Available because
-      # StopTransactionHandler clears it when no active sessions remain; the
-      # connector-scoped StatusNotifications only record connector metadata.
+      # TC_012 step 2: once the transaction is stopped, the connector cycles
+      # back to Available as reported by the station's StatusNotifications.
+      # Whole-station status is owned by connector-0 notifications and is not
+      # part of the transaction lifecycle.
       test "connector returns to Available after the remote stop" do
         session = create_charging_session(@cp, connector_id: 1, status: "Charging", start_meter_value: 0)
-        @cp.update!(status: "Charging")
 
         drive_stop_transaction(
           "transactionId" => session.transaction_id,
@@ -61,15 +60,14 @@ module Ocpp
           "timestamp" => Time.current.iso8601
         )
 
-        assert_equal "Available", @cp.reload.status,
-          "StopTransactionHandler should return the charge point to Available with no active sessions"
+        assert_not @cp.connector_charging?(1),
+          "no transaction should remain on the connector after StopTransaction"
 
         assert_equal({}, drive_status_notification(1, "Finishing"))
         assert_equal({}, drive_status_notification(1, "Available"))
 
-        assert_equal "Available", @cp.reload.status
-        assert_equal "Available", (@cp.metadata || {})["connector_1_status"],
-          "connector-scoped StatusNotification should record the connector status in metadata"
+        assert_equal "Available", @cp.reload.connector_status(1),
+          "connector-scoped StatusNotification should record the connector status"
       end
 
       private

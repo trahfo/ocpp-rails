@@ -43,13 +43,9 @@ module Ocpp
         private
 
         def update_connector_status(connector_id, status, error_code)
-          metadata = @charge_point.metadata || {}
-          old_status = metadata["connector_#{connector_id}_status"]
-
-          metadata["connector_#{connector_id}_status"] = status
-          metadata["connector_#{connector_id}_error_code"] = error_code if error_code
-          metadata["connector_#{connector_id}_updated_at"] = Time.current.iso8601
-          @charge_point.update(metadata: metadata)
+          record = @charge_point.connector_statuses.find_or_initialize_by(connector_id: connector_id)
+          old_status = record.status
+          record.update!(status: status, error_code: error_code)
 
           # Log state change if status actually changed
           log_status_change(connector_id, old_status, status, {

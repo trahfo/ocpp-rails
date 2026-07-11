@@ -50,12 +50,15 @@ Adding OCPP support almost always means one of these:
 
 ## Models & extension points
 
-Models live in `app/models/ocpp/rails/` (all tables prefixed `ocpp_`): `ChargePoint`, `ChargingSession`, `MeterValue`, `Message` (the audit log), `Authorization`, `StateChange`. Note `transaction_id` is a dedicated random 31-bit integer, **not** the AR primary key — outbound stop/meter operations resolve sessions by it.
+Models live in `app/models/ocpp/rails/` (all tables prefixed `ocpp_`): `ChargePoint`, `ConnectorStatus`, `ChargingSession`, `MeterValue`, `Message` (the audit log), `Authorization`, `StateChange`. Note `transaction_id` is a dedicated random 31-bit integer, **not** the AR primary key — outbound stop/meter operations resolve sessions by it.
+
+`ChargePoint#status` is whole-station only (connector-0 StatusNotifications, BootNotification, Heartbeat) — never touched by a connector's transaction lifecycle. Per-connector status lives in `ConnectorStatus` (one row per `charge_point_id`+`connector_id`, written by `StatusNotificationHandler` for `connectorId >= 1`), read via `ChargePoint#connector_status`/`#connector_error_code`. `ChargePoint#connector_charging?` is session-derived, not StatusNotification-derived — use it when you need an authoritative "is this connector transacting right now" answer independent of the station's last report.
 
 Behavior is customized through `Ocpp::Rails.setup { |config| ... }` (`lib/ocpp/rails.rb`, `Configuration`):
 - `authentication_mode` — `:basic` (default) or `:none`.
 - **Authorization hooks** (`register_authorization_hook`) — plug in real RFID/idTag validation; orchestrated by `AuthorizationHookManager`, run async via `AuthorizationAsyncHookJob`.
 - **State-change hooks** (`register_state_change_hook`) — react to connector/connection transitions; `StateChangeHookManager` + `AsyncHookJob`.
+- **Session hooks** (`register_session_hook`) — fire `call(charging_session, event)` (`event` = `"started"`/`"stopped"`) from `StartTransactionHandler`/`StopTransactionHandler`; orchestrated by `SessionHookManager`, run async via `SessionAsyncHookJob`. `"stopped"` fires after `transactionData` meter values are persisted. Duplicate/replayed `StartTransaction`s that resume an already-open session do not re-fire `"started"`.
 - Rate limits, retention/cleanup windows, and `implausible_energy_jump_wh` (used by `MeterAnomalyDetector`; unparseable station clocks are handled by `TimestampParser`, which flags rather than silently substitutes server time).
 
 Consumers install with `rails generate ocpp:rails:install` (copies migrations + initializer, mounts the engine).
