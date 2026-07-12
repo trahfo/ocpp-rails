@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Native raw OCPP-J transport.** Real charge points speak bare OCPP-J over a plain WebSocket (subprotocol `ocpp1.6`, identity in the URL path, frames are bare `[2,"id","Action",{…}]` arrays); the existing endpoint only accepted the ActionCable-wrapped protocol, so a stock station could not connect. Set `config.transport = :raw` and stations connect directly at `ws://host/ocpp/<identifier>`. `Ocpp::Rails::RawSocket::Endpoint` is a Rack app (mounted by the engine when the transport is enabled) that authenticates from the upgrade request with the existing `StationAuthenticator` (Security Profile 1) and connection rate limiter, then bridges the socket to the same transport-agnostic core (`MessageHandler`, handlers, hooks, audit) the ActionCable channel uses. Outbound frames (CALLRESULTs and remote-control CALLs) ride the existing `ChargePointChannel` broadcasting, so cross-process delivery (a job on a different worker than the socket) works through the configured pub/sub adapter with no producer changes.
+- `config.transport` (`:action_cable` (default) | `:raw` | `:both`), plus `config.raw_socket_path`, `config.websocket_subprotocols`, and `config.raw_socket_max_frame_bytes`.
+
+### Changed
+- No behavioural change to the default `:action_cable` transport — existing deployments are unaffected.
+
 ## [0.3.0] - 2026-07-12
 
 ### Added

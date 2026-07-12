@@ -138,18 +138,40 @@ Ocpp::Rails.setup do |config|
 end
 ```
 
-**Charge points connect to:**
-```
-ws://your-server:3000/ocpp/cable
+#### Transports
+
+`config.transport` selects how charge points reach the engine:
+
+- **`:raw`** — native **bare OCPP-J** over a plain WebSocket, which is what
+  real/commercial charge points speak. Stations connect to:
+  ```
+  ws://your-server:3000/ocpp/<charge-point-identifier>
+  ```
+  The identity is the last path segment; frames are the bare OCPP arrays
+  (`[2,"id","Action",{…}]`) with subprotocol `ocpp1.6`.
+- **`:action_cable`** (default) — OCPP-J wrapped in the ActionCable JSON protocol.
+  Stations connect to `ws://your-server:3000/ocpp/cable` and must speak the
+  ActionCable subscribe/`message` handshake (a generic OCPP station cannot; this
+  is aimed at ActionCable-aware clients/simulators). Kept as the default for
+  backwards compatibility.
+- **`:both`** — mount both endpoints side by side (useful while migrating).
+
+```ruby
+Ocpp::Rails.setup do |config|
+  config.transport = :raw   # accept real OCPP-J wallboxes directly
+end
 ```
 
-Stations authenticate with HTTP Basic Auth on the WebSocket upgrade
-(OCPP-J Security Profile 1, enabled by default). Provision a per-station
-credential first:
+Both transports authenticate identically: HTTP Basic Auth on the WebSocket
+upgrade (OCPP-J Security Profile 1, enabled by default; the Basic username must
+equal the station identity). Provision a per-station credential first:
 
 ```ruby
 charge_point.update!(auth_password: SecureRandom.base58(32))
 ```
+
+For internet-facing deployments use TLS (`wss://`, Security Profile 2),
+terminated by a reverse proxy in front of the app.
 
 For detailed setup instructions, see the [Getting Started Guide](docs/getting-started.md)
 and the [Security Guide](docs/security.md).
