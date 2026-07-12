@@ -77,3 +77,6 @@ yarn-debug.log*
 /public/uploads
 
 .DS_Store
+
+# Claude Code local session/tooling directory
+.claude/
