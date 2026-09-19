@@ -83,10 +83,42 @@ module Ocpp
 
         # Detect a silently-dropped peer (no FIN) so a half-open socket doesn't
         # pin the station "connected" forever; OCPP Heartbeat covers the rest.
+        #
+        # SO_KEEPALIVE on its own leaves the timers at the OS defaults, and on
+        # Linux that is 7200 seconds of silence before the first probe: a
+        # station whose mobile link vanishes keeps a socket nobody will ever
+        # read from, and the charge point reads connected, for two hours. The
+        # three timers are what make the flag mean something -- with the
+        # defaults here a vanished peer is gone in about three and a half
+        # minutes, for one probe per idle period on an otherwise silent link.
         def enable_tcp_keepalive(io)
-          io.setsockopt(Socket::SOL_SOCKET, Socket::SO_KEEPALIVE, true) if io.respond_to?(:setsockopt)
-        rescue StandardError
-          # non-fatal; some IO objects (e.g. in tests) don't support socket opts
+          return unless io.respond_to?(:setsockopt)
+
+          configuration = Ocpp::Rails.configuration
+
+          set_socket_option(io, Socket::SOL_SOCKET, :SO_KEEPALIVE, true)
+          set_socket_option(io, Socket::IPPROTO_TCP, keepalive_idle_option, configuration.raw_socket_keepalive_idle)
+          set_socket_option(io, Socket::IPPROTO_TCP, :TCP_KEEPINTVL, configuration.raw_socket_keepalive_interval)
+          set_socket_option(io, Socket::IPPROTO_TCP, :TCP_KEEPCNT, configuration.raw_socket_keepalive_probes)
+        end
+
+        # Seconds of silence before the first probe: TCP_KEEPIDLE on Linux,
+        # TCP_KEEPALIVE on macOS and the BSDs, neither on Windows -- where it
+        # is skipped like any other option the platform does not define.
+        def keepalive_idle_option
+          Socket.const_defined?(:TCP_KEEPIDLE) ? :TCP_KEEPIDLE : :TCP_KEEPALIVE
+        end
+
+        # Best-effort by design: a platform may not define the constant, an IO
+        # in a test may not be a socket at all, and none of it is worth
+        # refusing a station's connection over.
+        def set_socket_option(io, level, name, value)
+          return if value.nil?
+          return unless Socket.const_defined?(name)
+
+          io.setsockopt(level, Socket.const_get(name), value)
+        rescue StandardError => e
+          ::Rails.logger.debug("[OCPP][raw] could not set #{name}: #{e.message}")
         end
 
         def not_websocket

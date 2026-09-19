@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- **A station that vanishes is noticed in minutes instead of hours.** The raw endpoint set `SO_KEEPALIVE` on a station socket but left the timers at the OS defaults — 7200 seconds of silence before the first probe on Linux. A charge point whose mobile link drops without a FIN therefore kept a half-open socket, and read `connected`, for about two hours. The idle, interval and probe timers are now set explicitly (`config.raw_socket_keepalive_idle` 120, `raw_socket_keepalive_interval` 30, `raw_socket_keepalive_probes` 3, any of them `nil` to leave it to the OS), so a vanished station is dropped and marked disconnected in roughly three and a half minutes. Options a platform does not define are skipped.
+
 ## [0.4.0] - 2026-07-15
 
 ### Added

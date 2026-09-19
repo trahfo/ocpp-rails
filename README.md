@@ -173,6 +173,26 @@ charge_point.update!(auth_password: SecureRandom.base58(32))
 For internet-facing deployments use TLS (`wss://`, Security Profile 2),
 terminated by a reverse proxy in front of the app.
 
+##### Noticing a station that vanishes
+
+A station on a mobile link can disappear without closing its TCP connection, and
+nothing on the wire says so: the socket stays open, the reader thread stays
+parked, and `ChargePoint#connected` keeps reading `true`. Raw station sockets are
+therefore kept alive on explicit timers rather than the OS defaults (7200 seconds
+idle on Linux — two hours before the first probe):
+
+```ruby
+config.raw_socket_keepalive_idle     = 120  # seconds of silence before probing
+config.raw_socket_keepalive_interval = 30   # seconds between probes
+config.raw_socket_keepalive_probes   = 3    # probes before the socket is dropped
+```
+
+With these defaults a vanished station is dropped — and marked disconnected —
+about three and a half minutes after it stops answering, for one probe per idle
+period on an otherwise silent link and none at all while it is talking. Set a
+value to `nil` to leave that timer to the operating system. Unsupported options
+are skipped per platform (Windows defines none of the three).
+
 For detailed setup instructions, see the [Getting Started Guide](docs/getting-started.md)
 and the [Security Guide](docs/security.md).
 
