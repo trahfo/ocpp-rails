@@ -89,13 +89,22 @@ module Ocpp
 
         # Idempotent teardown. Safe to call from the driver's :close event, the
         # endpoint reader thread's ensure, or a displacing reconnect.
-        def close
+        #
+        # `superseded` is that last case: the station is not going away, it has
+        # just replaced this socket with a newer one, so this teardown must not
+        # mark it disconnected. Writing `connected: false` there is wrong twice
+        # over -- the station is live on the new socket, and the write lands
+        # through this connection's own ChargePoint instance, which the newer
+        # connection (holding an instance loaded before the write) then cannot
+        # correct, because Active Record skips an attribute that did not change
+        # on the instance it is saving.
+        def close(superseded: false)
           return if @closed
 
           @closed = true
           unsubscribe_outbound
           Registry.remove(@charge_point.identifier, self)
-          ::Rails.application.executor.wrap { mark_disconnected }
+          ::Rails.application.executor.wrap { mark_disconnected } unless superseded
           close_io
           @driver.close
         rescue => e
@@ -113,7 +122,7 @@ module Ocpp
           return if previous.nil? || previous.equal?(self)
 
           @logger.info("[OCPP][raw] #{ident}: superseding previous connection")
-          previous.close
+          previous.close(superseded: true)
         end
 
         def subscribe_outbound
@@ -133,10 +142,19 @@ module Ocpp
         end
 
         def mark_connected
+          # From the row, not from what the handshake happened to load: another
+          # process tearing down its stale socket for this same station between
+          # the two writes false, and an instance that still reads true would
+          # never write it back (Active Record skips unchanged attributes).
+          @charge_point.reload
           was = @charge_point.connected
           @charge_point.update(connected: true, last_heartbeat_at: Time.current)
           log_connection_change(was, true)
           @logger.info("[OCPP][raw] #{ident}: connected")
+        rescue ActiveRecord::RecordNotFound
+          # The station row was removed between the handshake and this write;
+          # the socket is torn down with it. Nothing to mark.
+          @logger.info("[OCPP][raw] #{ident}: station row is gone, not marked connected")
         end
 
         def mark_disconnected

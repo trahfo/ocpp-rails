@@ -72,6 +72,19 @@ module Ocpp
         assert @charge_point.connected
       end
 
+      test "heartbeat repairs a row set disconnected behind this instance's back" do
+        # What another process does when it tears down its own stale socket for
+        # this station: the row goes false while this instance, held for the
+        # life of a live socket, still reads true. Without the reload, Active
+        # Record skips the unchanged attribute and the station stays offline in
+        # the row however many heartbeats arrive on the live socket.
+        ChargePoint.where(id: @charge_point.id).update_all(connected: false)
+
+        @charge_point.heartbeat!
+
+        assert @charge_point.reload.connected
+      end
+
       test "multiple heartbeats update timestamp progressively" do
         first_heartbeat = @charge_point.last_heartbeat_at
 

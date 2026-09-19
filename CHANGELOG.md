@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- **A station that reconnects before its old socket is torn down no longer reads offline while it is live.** On the raw transport, `Connection#open` displaces the previous connection for that station, and closing it marked the station disconnected — while the station was answering on the new socket. Because each handshake loads its own `ChargePoint`, and Active Record writes only the attributes that changed on the instance being saved, the following `mark_connected` (whose instance still read `true`) wrote nothing, so `ocpp_charge_points.connected` stayed `false` for the whole life of the new socket and `Heartbeat`, running on that same instance, never repaired it. A superseded teardown now skips the disconnect write, and both `RawSocket::Connection#mark_connected` and `ChargePoint#heartbeat!` reload before writing, so the flag is also repaired when another process tears down its own stale socket for the same station.
+
 ## [0.4.0] - 2026-07-15
 
 ### Added

@@ -36,7 +36,19 @@ module Ocpp
         )
       end
 
+      # Refresh the station's liveness stamp, and repair `connected` if the row
+      # disagrees with this instance. The reload is what makes that possible: a
+      # raw Connection holds one ChargePoint instance for the whole life of its
+      # socket, and Active Record writes only the attributes that changed *on
+      # that instance*, so `connected: true` here is silently dropped whenever
+      # the instance already believes it -- however the row reads. A station
+      # whose row was set false elsewhere (another process tearing down its
+      # stale socket for the same station, say) would otherwise stay false for
+      # as long as this socket lives, however many heartbeats arrive. One
+      # SELECT per heartbeat interval is cheap beside the Message row every
+      # heartbeat already writes.
       def heartbeat!
+        reload
         old_connected = connected
         update(last_heartbeat_at: Time.current, connected: true)
 
@@ -54,6 +66,10 @@ module Ocpp
             ::Rails.logger.error("Failed to log state change: #{error.message}")
           end
         end
+      rescue ActiveRecord::RecordNotFound
+        # The station row was removed while its socket was still up: nothing to
+        # stamp, and nothing this instance can do about it.
+        nil
       end
 
       def disconnect!
