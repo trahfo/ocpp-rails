@@ -75,6 +75,26 @@ module Ocpp
         assert_equal "BLOCKED_TAG", authorization.id_tag
       end
 
+      # PlugAndCharge: the station presents no token, so the idTag arrives
+      # empty. The decision is still a decision and belongs in the audit
+      # trail -- before, the row was rejected for a missing idTag and the
+      # handler logged an error for every such message instead.
+      test "a PlugAndCharge authorization with no token is recorded" do
+        assert_difference "Ocpp::Rails::Authorization.count", 1 do
+          authorize("")
+        end
+
+        assert_equal "", Authorization.last.id_tag
+      end
+
+      test "an Authorize carrying no idTag field at all is recorded" do
+        assert_difference "Ocpp::Rails::Authorization.count", 1 do
+          Actions::AuthorizeHandler.new(@cp, SecureRandom.uuid, {}).call
+        end
+
+        assert_equal "", Authorization.last.id_tag
+      end
+
       private
 
       def authorize(tag)

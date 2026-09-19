@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- **A PlugAndCharge station's authorizations are recorded instead of logged as failures.** Under PlugAndCharge the vehicle is the credential, so `Authorize` and `StartTransaction` arrive with an empty `idTag` — `Authorization` required one, so `AuthorizeHandler`/`StartTransactionHandler` rescued the validation failure and wrote `Failed to persist Authorization record` to the log for every such message, leaving no audit row for sessions that otherwise ran normally. A missing token is now normalised to `""` (the column is NOT NULL) and the decision is stored like any other.
+
 ## [0.4.0] - 2026-07-15
 
 ### Added

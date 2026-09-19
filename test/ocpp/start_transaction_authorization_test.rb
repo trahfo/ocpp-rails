@@ -56,6 +56,17 @@ module Ocpp
         assert_equal response["transactionId"], @charge_point.charging_sessions.last.transaction_id
       end
 
+      # PlugAndCharge: the vehicle is the credential, so the station opens the
+      # transaction with an empty idTag. The session started either way; what
+      # was lost was the authorization row behind it, once per session.
+      test "a PlugAndCharge StartTransaction records its authorization" do
+        assert_difference [ "Ocpp::Rails::ChargingSession.count", "Ocpp::Rails::Authorization.count" ], 1 do
+          start_transaction(id_tag: "")
+        end
+
+        assert_equal "", Authorization.last.id_tag
+      end
+
       test "the authorization decision is persisted for audit" do
         assert_difference "Ocpp::Rails::Authorization.count", 1 do
           start_transaction(id_tag: "BLOCKED_TAG")
