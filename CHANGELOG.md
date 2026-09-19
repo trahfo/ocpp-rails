@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- **`bin/rails generate ocpp:rails:install` now copies the engine's own migrations** instead of a second, hand-maintained set of templates that had drifted from them. The templates never created `ocpp_state_changes` or `ocpp_authorizations` — both written by the gem at runtime, from the connection/heartbeat state log and from every `Authorize`/`StartTransaction` — so an app installed that way logged an error per message and silently stored neither. They also declared `metadata` as `jsonb`, making a generator-installed app Postgres-only for no reason, and predated `transaction_id` becoming an integer, the meter-value anomaly flags and timestamp provenance, `auth_password_digest`, and the active-session guard. Existing installs are unaffected; `rails ocpp_rails:install:migrations` was always the working path and is what the generator now runs.
+
 ## [0.4.0] - 2026-07-15
 
 ### Added

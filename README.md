@@ -113,7 +113,8 @@ rails generate ocpp:rails:install
 ```
 
 This will:
-- ✅ Create database migrations for charge points, sessions, and meter values
+- ✅ Copy the engine's own migrations into `db/migrate` (charge points, sessions,
+  meter values, messages, connector statuses, state changes and authorizations)
 - ✅ Mount the engine at `/ocpp` (ActionCable WebSocket endpoint)
 - ✅ Generate an initializer at `config/initializers/ocpp_rails.rb`
 - ✅ Configure ActionCable for SQLite compatibility
