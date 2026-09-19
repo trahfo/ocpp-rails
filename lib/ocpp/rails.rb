@@ -47,7 +47,8 @@ module Ocpp
                     :authorization_hooks, :authorization_retention_days, :authorization_cleanup_enabled,
                     :session_hooks, :implausible_energy_jump_wh, :authentication_mode,
                     :max_messages_per_minute, :max_connection_attempts_per_minute,
-                    :transport, :raw_socket_path, :websocket_subprotocols, :raw_socket_max_frame_bytes
+                    :transport, :raw_socket_path, :websocket_subprotocols, :raw_socket_max_frame_bytes,
+                    :redacted_configuration_keys
 
       def initialize
         @ocpp_version = "1.6"
@@ -89,6 +90,14 @@ module Ocpp
         # Max inbound WebSocket message size on the raw endpoint (bytes). OCPP-J
         # messages are small; oversized frames are a DoS vector and are refused.
         @raw_socket_max_frame_bytes = 64 * 1024
+        # Configuration keys whose value is a secret. Message redacts them out
+        # of the stored payload, in both directions, so a credential pushed
+        # with ChangeConfiguration -- or echoed straight back by a
+        # GetConfiguration reply -- never lands in ocpp_messages.
+        # authorizationKey is the station's own Security Profile 1 password;
+        # add vendor keys that hold secrets. Matched case-insensitively, as
+        # OCPP 1.6 treats configuration keys. [] stores every payload verbatim.
+        @redacted_configuration_keys = [ "authorizationKey" ]
       end
 
       def register_state_change_hook(hook)

@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Security
+- **`authorizationKey` is no longer stored in the clear in `ocpp_messages`.** Every message is persisted with its payload, so an app using Security Profile 1 wrote the station's own credential to the database twice per rollout: once as the outbound `ChangeConfiguration` value, and again when a `GetConfiguration` reply echoed it back inside `configurationKey`. `Message` now redacts the value of any key in the new `config.redacted_configuration_keys` (default `["authorizationKey"]`, matched case-insensitively) in a `before_save`, so the plaintext never reaches the database in either direction. Set it to `[]` to keep the previous behaviour.
+
 ## [0.4.0] - 2026-07-15
 
 ### Added

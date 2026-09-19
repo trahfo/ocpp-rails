@@ -138,6 +138,22 @@ Ocpp::Rails.setup do |config|
 end
 ```
 
+#### Secrets in stored payloads
+
+Every message is stored with its payload, so any configuration key whose value
+is a credential would be written to `ocpp_messages` in the clear — in both
+directions, since a `GetConfiguration` reply echoes back what a
+`ChangeConfiguration` just set. `config.redacted_configuration_keys` lists the
+keys whose value is replaced with `[redacted]` before the row is saved:
+
+```ruby
+config.redacted_configuration_keys = ["authorizationKey"]  # the default
+```
+
+`authorizationKey` is the station's own Security Profile 1 password; add vendor
+keys that hold secrets. Key names are matched case-insensitively, as OCPP 1.6
+treats configuration keys. Set `[]` to store every payload verbatim.
+
 #### Transports
 
 `config.transport` selects how charge points reach the engine:
