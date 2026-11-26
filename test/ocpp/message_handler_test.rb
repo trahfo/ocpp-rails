@@ -41,6 +41,43 @@ module Ocpp
         assert_includes log_output, "Validation failed", "full exception detail belongs in the server log"
       end
 
+      test "a handler error is reported to Rails.error with the station, action and message id" do
+        message_id = SecureRandom.uuid
+        raw = [ 2, message_id, "StartTransaction", { "idTag" => "RFID1" } ].to_json
+
+        report = assert_error_reported(ActiveRecord::RecordInvalid) do
+          MessageHandler.new(@charge_point, raw).process
+        end
+
+        assert_equal "ocpp.rails", report.source
+        assert_equal :error, report.severity
+        assert_equal @charge_point.identifier, report.context[:charge_point]
+        assert_equal "StartTransaction", report.context[:action]
+        assert_equal message_id, report.context[:message_id]
+        assert_not_includes report.context.to_s, "RFID1", "the payload can hold an id tag and must stay out"
+      end
+
+      test "a message that cannot be logged is reported" do
+        # A CALL without a message id fails the audit row's validation.
+        raw = [ 2, nil, "Heartbeat", {} ].to_json
+
+        report = assert_error_reported(ActiveRecord::RecordInvalid) do
+          MessageHandler.new(@charge_point, raw).process
+        end
+
+        assert_equal "Heartbeat", report.context[:action]
+      end
+
+      test "an unsupported action is answered, not reported" do
+        raw = [ 2, SecureRandom.uuid, "NoSuchAction", {} ].to_json
+
+        assert_no_error_reported do
+          MessageHandler.new(@charge_point, raw).process
+        end
+
+        assert_equal "NotSupported", last_broadcast_frame[2]
+      end
+
       private
 
       def last_broadcast_frame

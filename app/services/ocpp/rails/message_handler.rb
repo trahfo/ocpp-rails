@@ -26,17 +26,18 @@ module Ocpp
           send_callerror(SecureRandom.uuid, "ProtocolError", "Unknown message type")
         end
       rescue => e
-        send_internal_error(parsed && parsed[:message_id], e, "Error processing message")
+        send_internal_error(parsed && parsed[:message_id], e, "Error processing message", action: parsed && parsed[:action])
       end
 
       private
 
       # Never place exception details in the CALLERROR sent to the station;
       # log them server-side under a reference the station response carries.
-      def send_internal_error(message_id, exception, context)
+      def send_internal_error(message_id, exception, context, action: nil)
         error_ref = SecureRandom.hex(8)
         log_error("#{context} (ref #{error_ref}): #{exception.class}: #{exception.message}")
         log_error(exception.backtrace.join("\n")) if exception.backtrace
+        report_error(exception, action: action, message_id: message_id)
         send_callerror(
           message_id || SecureRandom.uuid,
           "InternalError",
@@ -63,7 +64,7 @@ module Ocpp
         response = handler.call
         send_callresult(parsed[:message_id], response)
       rescue => e
-        send_internal_error(parsed[:message_id], e, "Error in #{parsed[:action]} handler")
+        send_internal_error(parsed[:message_id], e, "Error in #{parsed[:action]} handler", action: parsed[:action])
       end
 
       def handle_callresult(parsed)
@@ -135,6 +136,11 @@ module Ocpp
         )
       rescue => e
         log_error("Failed to log message: #{e.message}")
+        report_error(e, action: parsed[:action], message_id: parsed[:message_id])
+      end
+
+      def report_error(exception, action: nil, message_id: nil)
+        ErrorReporting.report(exception, charge_point: charge_point.identifier, action: action, message_id: message_id)
       end
 
       def log_error(message)

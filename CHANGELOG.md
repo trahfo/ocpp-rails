@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Rescued errors are reported to `Rails.error`.** The gem rescues every fault in its socket threads and message handling so that one bad frame cannot take a station's connection down, and until now wrote it to `Rails.logger` only — the host app's error tracker or error mail never heard of a failing handler. These rescue sites now also call `Rails.error.report`: message processing, an action handler, a message audit row that could not be written, and on the raw transport the endpoint, its reader thread, relaying an outbound frame and a connection state change that could not be written, plus the ActionCable channel's `receive`. Each calls `Rails.error.report` with `handled: true`, `severity: :error` and `source: "ocpp.rails"`. The context carries the charge point identifier and, where known, the OCPP action and message id; never the payload, which can hold an id tag. Noise from a connection that is going away (a failed ping, teardown, unsubscribe or close, a link that timed out or reset, a socket option that could not be set) stays log-only, as do the failures a handler rescues itself. No new dependency, and an app without a subscriber notices nothing.
+
 ## [0.4.0] - 2026-07-15
 
 ### Added

@@ -58,11 +58,16 @@ module Ocpp
             return
           end
 
+          # Rescued inside the executor: an error that escapes `wrap` is reported
+          # by the executor itself, as an unhandled application error without
+          # the station, and Rails then skips our own report as a duplicate.
           ::Rails.application.executor.wrap do
             MessageHandler.new(@charge_point, text).process
+          rescue => e
+            log_and_report("error handling inbound message", e)
           end
         rescue => e
-          log_error("error handling inbound message", e)
+          log_and_report("error handling inbound message", e)
         end
 
         # Relay a frame published on this station's ActionCable broadcasting down
@@ -73,8 +78,11 @@ module Ocpp
 
           frame = JSON.parse(encoded)["message"]
           write(frame) if frame
-        rescue => e
+        rescue IOError, SystemCallError => e
+          # The socket died under the write; the reader thread tears it down.
           log_error("error relaying outbound frame", e)
+        rescue => e
+          log_and_report("error relaying outbound frame", e)
         end
 
         def write(frame)
@@ -158,7 +166,7 @@ module Ocpp
             metadata: { source: "raw_socket" }
           )
         rescue => e
-          log_error("failed to log state change", e)
+          log_and_report("failed to log state change", e)
         end
 
         def close_io
@@ -174,6 +182,14 @@ module Ocpp
         def log_error(context, error)
           message = error.respond_to?(:message) ? error.message : error.to_s
           @logger.error("[OCPP][raw] #{ident}: #{context}: #{message}")
+        end
+
+        # For a fault in our own logic. Ping, teardown, unsubscribe and close
+        # failures stay log-only: on a connection that is going away they are
+        # noise, not news.
+        def log_and_report(context, error)
+          log_error(context, error)
+          ErrorReporting.report(error, charge_point: @charge_point.identifier)
         end
       end
     end

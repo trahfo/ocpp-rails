@@ -173,6 +173,32 @@ charge_point.update!(auth_password: SecureRandom.base58(32))
 For internet-facing deployments use TLS (`wss://`, Security Profile 2),
 terminated by a reverse proxy in front of the app.
 
+#### Error reporting
+
+The engine rescues faults in its socket threads and message handling, so one
+bad frame cannot take a station's connection down. A fault in message
+processing, an action handler, the audit log or either transport is logged and
+reported to Rails' own error reporter with `source: "ocpp.rails"`, so whatever
+your app has subscribed to `Rails.error` (an error tracker, an error mail)
+hears of it:
+
+```ruby
+class OcppErrorSubscriber
+  def report(error, handled:, severity:, context:, source: nil)
+    return unless source == "ocpp.rails"
+
+    # context[:charge_point], and where known context[:action] / context[:message_id]
+  end
+end
+
+Rails.error.subscribe(OcppErrorSubscriber.new)
+```
+
+The context never carries the message payload. Failures on a connection that
+is already going away (ping, teardown, close, a dead link) are logged only, and
+so are the failures a handler rescues itself, such as a meter value or an
+authorization row that could not be stored.
+
 For detailed setup instructions, see the [Getting Started Guide](docs/getting-started.md)
 and the [Security Guide](docs/security.md).
 
