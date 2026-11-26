@@ -35,6 +35,7 @@ module Ocpp
           [ -1, {}, [] ]
         rescue => e
           ::Rails.logger.error("[OCPP][raw] endpoint error: #{e.class}: #{e.message}")
+          ErrorReporting.report(e, charge_point: decision&.identifier)
           internal_error
         end
 
@@ -71,10 +72,17 @@ module Ocpp
               end
             rescue EOFError, IOError, Errno::ECONNRESET, Errno::EPIPE
               # peer went away / socket closed — normal disconnect
+            rescue SystemCallError => e
+              # The link itself failed (a keepalive timeout, an unreachable
+              # host): still a station going away, so logged and not reported.
+              ::Rails.logger.error(
+                "[OCPP][raw] reader error for #{connection.charge_point.identifier}: #{e.message}"
+              )
             rescue => e
               ::Rails.logger.error(
                 "[OCPP][raw] reader error for #{connection.charge_point.identifier}: #{e.message}"
               )
+              ErrorReporting.report(e, charge_point: connection.charge_point.identifier)
             ensure
               connection.close
             end

@@ -153,6 +153,65 @@ module Ocpp
           assert_nil @charge_point.connector_status(1), "rate-limited frame must not be processed"
         end
 
+        test "an outbound frame that cannot be relayed is reported to Rails.error" do
+          build.open
+          broadcasting = ChargePointChannel.broadcasting_for(@charge_point)
+
+          report = assert_error_reported(JSON::ParserError) do
+            @pubsub.publish(broadcasting, "not json")
+          end
+
+          assert_equal "ocpp.rails", report.source
+          assert_equal @charge_point.identifier, report.context[:charge_point]
+        end
+
+        test "a handler error on an inbound frame is reported once" do
+          build.open
+          # Missing connectorId makes StartTransactionHandler raise.
+          frame = [ 2, "m3", "StartTransaction", { "idTag" => "RFID1" } ].to_json
+
+          reports = capture_error_reports(StandardError) do
+            @driver.emit(:message, MessageEvent.new(frame))
+          end
+
+          assert_equal 1, reports.size
+        end
+
+        test "an error that escapes the message handler is reported as the gem's own, with the station" do
+          build.open
+          # Without the rescue inside the executor, the executor reports this
+          # itself as an unhandled "application.active_support" error.
+          MessageHandler.define_singleton_method(:new) { |*| raise "handler exploded" }
+
+          reports = capture_error_reports(RuntimeError) do
+            @driver.emit(:message, MessageEvent.new([ 2, "m4", "Heartbeat", {} ].to_json))
+          end
+
+          assert_equal 1, reports.size
+          assert_equal "ocpp.rails", reports.first.source
+          assert reports.first.handled?
+          assert_equal @charge_point.identifier, reports.first.context[:charge_point]
+        ensure
+          MessageHandler.singleton_class.send(:remove_method, :new)
+        end
+
+        test "a write to a socket that just died is logged, not reported" do
+          build.open
+          @driver.define_singleton_method(:text) { |*| raise Errno::EPIPE }
+          broadcasting = ChargePointChannel.broadcasting_for(@charge_point)
+
+          assert_no_error_reported do
+            @pubsub.publish(broadcasting, { "message" => "[3,\"m5\",{}]" }.to_json)
+          end
+        end
+
+        test "a failed ping on a dying connection is logged, not reported" do
+          connection = build.open
+          @driver.define_singleton_method(:ping) { |*| raise IOError, "closed stream" }
+
+          assert_no_error_reported { connection.ping }
+        end
+
         test "close marks disconnected, unsubscribes, drops from the registry, and closes the driver" do
           connection = build.open
           broadcasting = ChargePointChannel.broadcasting_for(@charge_point)

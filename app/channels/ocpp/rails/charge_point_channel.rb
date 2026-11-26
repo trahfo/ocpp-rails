@@ -61,6 +61,7 @@ module Ocpp
       rescue => e
         logger.error "Error receiving message from ChargePoint #{@charge_point&.identifier}: #{e.message}"
         logger.error e.backtrace.join("\n")
+        ErrorReporting.report(e, charge_point: @charge_point&.identifier)
       end
 
       private

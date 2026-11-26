@@ -73,6 +73,23 @@ module Ocpp
           assert_not hijacked, "must authenticate from the env before taking the socket"
         end
 
+        test "an error while accepting an upgrade answers 500 and is reported to Rails.error" do
+          @charge_point = create_charge_point(
+            identifier: "CP-E2E-ERR", auth_password: "station-secret", connected: false, last_heartbeat_at: nil
+          )
+          env = upgrade_env(identifier: "CP-E2E-ERR", password: "station-secret")
+          env["rack.hijack"] = -> { raise "hijack failed" }
+
+          status = nil
+          report = assert_error_reported(RuntimeError) do
+            status, = Endpoint.new.call(env)
+          end
+
+          assert_equal 500, status
+          assert_equal "ocpp.rails", report.source
+          assert_equal "CP-E2E-ERR", report.context[:charge_point]
+        end
+
         test "a real bare OCPP-J client connects, boots, and drives a session status" do
           @charge_point = create_charge_point(
             identifier: "CP-E2E-1", auth_password: "station-secret", connected: false, last_heartbeat_at: nil
